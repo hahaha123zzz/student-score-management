@@ -5,17 +5,30 @@
 #include <ctime>
 #include <iomanip>
 #include <algorithm>
+#ifdef _WIN32
 #include <io.h>
 #include <direct.h>
+#else
+#include <unistd.h>
+#include <sys/stat.h>
+#endif
 
 namespace util {
 
 static bool dirExists(const std::string& path) {
+#ifdef _WIN32
     return _access(path.c_str(), 0) == 0;
+#else
+    return access(path.c_str(), F_OK) == 0;
+#endif
 }
 
 static void makeDir(const std::string& path) {
+#ifdef _WIN32
     _mkdir(path.c_str());
+#else
+    mkdir(path.c_str(), 0755);
+#endif
 }
 
 json readJSON(const std::string& filename) {

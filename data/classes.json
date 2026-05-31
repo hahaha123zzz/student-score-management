@@ -1,17 +1,56 @@
 [
   {
+    "created_at": "2024-09-01",
     "grade": "高一",
-    "id": "C高一1班",
+    "id": "CLS1",
     "name": "高一1班"
   },
   {
+    "created_at": "2024-09-01",
     "grade": "高一",
-    "id": "C高一2班",
+    "id": "CLS2",
     "name": "高一2班"
   },
   {
+    "created_at": "2024-09-01",
     "grade": "高一",
-    "id": "C高一3班",
+    "id": "CLS3",
     "name": "高一3班"
+  },
+  {
+    "created_at": "2024-09-01",
+    "grade": "高二",
+    "id": "CLS4",
+    "name": "高二1班"
+  },
+  {
+    "created_at": "2024-09-01",
+    "grade": "高二",
+    "id": "CLS5",
+    "name": "高二2班"
+  },
+  {
+    "created_at": "2024-09-01",
+    "grade": "高二",
+    "id": "CLS6",
+    "name": "高二3班"
+  },
+  {
+    "created_at": "2024-09-01",
+    "grade": "高三",
+    "id": "CLS7",
+    "name": "高三1班"
+  },
+  {
+    "created_at": "2024-09-01",
+    "grade": "高三",
+    "id": "CLS8",
+    "name": "高三2班"
+  },
+  {
+    "created_at": "2024-09-01",
+    "grade": "高三",
+    "id": "CLS9",
+    "name": "高三3班"
   }
 ]

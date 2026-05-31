@@ -10,14 +10,23 @@
 #include "enhance.h"
 #include <iostream>
 #include <map>
+#ifdef _WIN32
 #include <io.h>
 #include <direct.h>
+#else
+#include <unistd.h>
+#include <sys/stat.h>
+#endif
 
 using namespace httplib;
 using json = nlohmann::json;
 
 static bool fileOrDirExists(const std::string& path) {
+#ifdef _WIN32
     return _access(path.c_str(), 0) == 0;
+#else
+    return access(path.c_str(), F_OK) == 0;
+#endif
 }
 
 std::string getBody(const Request& req) { return req.body; }
@@ -47,201 +56,305 @@ void requireAdmin(const Request& req, Response& res, std::function<void()> next)
 }
 
 void seedData() {
-    if (!fileOrDirExists("data")) _mkdir("data");
-
-    if (!fileOrDirExists("data/users.json")) {
-        json users = json::array();
-        auto addUser = [&](const std::string& id, const std::string& name, const std::string& role) {
-            json u;
-            u["id"] = id;
-            u["name"] = name;
-            u["password"] = util::hasher("123456");
-            u["role"] = role;
-            u["phone"] = "";
-            u["created_at"] = util::getCurrentTime();
-            users.push_back(u);
-        };
-        addUser("admin", "系统管理员", "admin");
-        addUser("T001", "张老师", "admin");
-        addUser("S2024001", "张三", "student");
-        addUser("S2024002", "李四", "student");
-        addUser("P2024001", "张三家长", "parent");
-        util::writeJSON("users.json", users);
+    if (!fileOrDirExists("data")) {
+#ifdef _WIN32
+        _mkdir("data");
+#else
+        mkdir("data", 0755);
+#endif
     }
 
-    if (!fileOrDirExists("data/students.json")) {
-        json students = json::array();
-        auto addStu = [&](const std::string& id, const std::string& name, const std::string& cls, const std::string& gender, const std::string& pid) {
-            json s;
-            s["id"] = id;
-            s["name"] = name;
-            s["birthday"] = "2008-01-01";
-            s["class"] = cls;
-            s["gender"] = gender;
-            s["parent_id"] = pid;
-            s["enrolled_at"] = "2024-09-01";
-            students.push_back(s);
-        };
-        addStu("S2024001", "张三", "高一1班", "男", "P2024001");
-        addStu("S2024002", "李四", "高一1班", "女", "");
-        addStu("S2024003", "王五", "高一1班", "男", "");
-        addStu("S2024004", "赵六", "高一2班", "女", "");
-        addStu("S2024005", "孙七", "高一2班", "男", "");
-        addStu("S2024006", "周八", "高一2班", "女", "");
-        addStu("S2024007", "吴九", "高一3班", "男", "");
-        addStu("S2024008", "郑十", "高一3班", "女", "");
-        addStu("S2024009", "刘十二", "高一3班", "男", "");
-        addStu("S2024010", "陈十三", "高一1班", "女", "");
-        addStu("S2024011", "杨十四", "高一2班", "男", "");
-        addStu("S2024012", "黄十五", "高一3班", "女", "");
-        util::writeJSON("students.json", students);
-    }
+    std::vector<std::string> allStuIds;
+    std::vector<std::string> allStuNames;
+    std::vector<std::string> allStuClasses;
+    std::vector<std::string> allStuGenders;
+    std::vector<int> allStuLevels;
+    bool studentsBuilt = false;
+
+    // ========== CLASSES ==========
+    std::vector<std::string> allClasses = {
+        "高一1班","高一2班","高一3班",
+        "高二1班","高二2班","高二3班",
+        "高三1班","高三2班","高三3班"
+    };
+    std::vector<std::string> grades = {"高一","高一","高一","高二","高二","高二","高三","高三","高三"};
 
     if (!fileOrDirExists("data/classes.json")) {
         json classes = json::array();
-        for (const char* name : {"高一1班", "高一2班", "高一3班"}) {
+        for (size_t i = 0; i < allClasses.size(); i++) {
             json c;
-            c["id"] = std::string("C") + name;
-            c["name"] = name;
-            c["grade"] = "高一";
+            c["id"] = "CLS" + std::to_string(i+1);
+            c["name"] = allClasses[i];
+            c["grade"] = grades[i];
+            c["created_at"] = "2024-09-01";
             classes.push_back(c);
         }
         util::writeJSON("classes.json", classes);
     }
 
+    // ========== SUBJECTS ==========
     if (!fileOrDirExists("data/subjects.json")) {
         json subjects = json::array();
-        for (auto& [name, full] : std::map<std::string, int>{
-            {"语文", 150}, {"数学", 150}, {"英语", 150},
-            {"物理", 100}, {"化学", 100}, {"生物", 100},
-            {"历史", 100}, {"政治", 100}, {"地理", 100}}) {
+        std::vector<std::pair<std::string,int>> subjs = {
+            {"语文",150},{"数学",150},{"英语",150},
+            {"物理",100},{"化学",100},{"生物",100},
+            {"历史",100},{"政治",100},{"地理",100}
+        };
+        for (size_t i = 0; i < subjs.size(); i++) {
             json s;
-            s["id"] = "SUB_" + name;
-            s["name"] = name;
-            s["full_score"] = full;
+            s["id"] = "SUB" + std::to_string(i+1);
+            s["name"] = subjs[i].first;
+            s["full_score"] = subjs[i].second;
             subjects.push_back(s);
         }
         util::writeJSON("subjects.json", subjects);
     }
 
+    // ========== STUDENTS (50 students across 9 classes) ==========
+    std::vector<std::vector<std::string>> classStudents = {
+        {"S2024001","01","张三","男", "S2024002","02","李四","女", "S2024003","03","王明","男", "S2024004","04","陈丽","女", "S2024005","05","刘洋","男", "S2024006","01","赵敏","女"},
+        {"S2024007","02","孙伟","男", "S2024008","03","周芳","女", "S2024009","01","吴强","男", "S2024010","02","郑婷","女", "S2024011","03","冯军","男", "S2024012","04","何静","女"},
+        {"S2024013","05","沈浩","男", "S2024014","01","韩雪","女", "S2024015","02","秦勇","男", "S2024016","03","许莉","女", "S2024017","01","邓超","男", "S2024018","02","彭蕾","女"},
+        {"S2025001","01","马飞","男", "S2025002","02","宋婷","女", "S2025003","03","唐龙","男", "S2025004","04","曹娜","女", "S2025005","05","高翔","男"},
+        {"S2025006","01","罗琳","女", "S2025007","02","梁志","男", "S2025008","03","谢慧","女", "S2025009","04","黄磊","男", "S2025010","05","朱玥","女"},
+        {"S2025011","01","徐明","男", "S2025012","02","胡燕","女", "S2025013","03","林峰","男", "S2025014","04","郭丽","女", "S2025015","05","蔡刚","男"},
+        {"S2026001","01","潘玉","女", "S2026002","02","蒋文","男", "S2026003","03","余磊","男", "S2026004","04","苏芳","女", "S2026005","05","叶波","男"},
+        {"S2026006","01","姜涛","男", "S2026007","02","董兰","女", "S2026008","03","程浩","男", "S2026009","04","魏敏","女"},
+        {"S2026010","01","袁帅","男", "S2026011","02","谌洁","女", "S2026012","03","欧阳","女", "S2026013","04","段鹏","男", "S2026014","05","靳悦","女"}
+    };
+
+    // Each entry: [id, levelStr, name, gender, id, levelStr, name, gender, ...]
+    // level: "01"=excellent, "02"=good, "03"=average, "04"=below avg, "05"=weak
+
+    for (size_t ci = 0; ci < classStudents.size(); ci++) {
+        for (size_t si = 0; si < classStudents[ci].size(); si+=4) {
+            std::string id = classStudents[ci][si];
+            std::string name = classStudents[ci][si+2];
+            std::string gender = classStudents[ci][si+3];
+            int lvl = std::stoi(classStudents[ci][si+1]);
+            allStuIds.push_back(id);
+            allStuNames.push_back(name);
+            allStuClasses.push_back(allClasses[ci]);
+            allStuGenders.push_back(gender);
+            allStuLevels.push_back(lvl);
+        }
+    }
+
+    // ========== USERS ==========
+    if (!fileOrDirExists("data/users.json")) {
+        json users = json::array();
+        auto addUsr = [&](const std::string& id, const std::string& name, const std::string& role) {
+            json u;
+            u["id"] = id; u["name"] = name; u["role"] = role;
+            u["password"] = util::hasher("123456");
+            u["phone"] = ""; u["created_at"] = util::getCurrentTime();
+            users.push_back(u);
+        };
+        addUsr("admin","系统管理员","admin");
+        addUsr("T001","张明老师","admin");
+        addUsr("T002","李华老师","admin");
+        addUsr("T003","王芳老师","admin");
+        for (size_t i = 0; i < allStuIds.size(); i++)
+            addUsr(allStuIds[i], allStuNames[i], "student");
+        // Parents for some students
+        for (size_t i = 0; i < 6; i++) {
+            std::string pid = "P2024" + std::string(1,'0'+i+1);
+            addUsr(pid, allStuNames[i]+"家长", "parent");
+        }
+        util::writeJSON("users.json", users);
+    }
+
+    // ========== STUDENTS ==========
+    if (!fileOrDirExists("data/students.json")) {
+        json students = json::array();
+        for (size_t i = 0; i < allStuIds.size(); i++) {
+            json s;
+            s["id"] = allStuIds[i];
+            s["name"] = allStuNames[i];
+            s["birthday"] = std::to_string(2007 + (i%3)) + "-0" + std::to_string(1+(i%9)) + "-" + std::to_string(10+(i%20));
+            s["class"] = allStuClasses[i];
+            s["gender"] = allStuGenders[i];
+            s["parent_id"] = (i < 6) ? ("P2024"+std::to_string(i+1)) : "";
+            s["enrolled_at"] = "2024-09-01";
+            students.push_back(s);
+        }
+        util::writeJSON("students.json", students);
+    }
+
+    // ========== EXAMS ==========
     if (!fileOrDirExists("data/exams.json")) {
         json exams = json::array();
-        json e;
-        e["id"] = "EXAM1";
-        e["name"] = "高一上学期期中考试";
-        e["date"] = "2025-11-10";
-        e["subjects"] = {"语文", "数学", "英语", "物理", "化学"};
-        e["status"] = "published";
-        e["weight_config"]["语文"]["full"] = 150; e["weight_config"]["语文"]["weight"] = 1.0;
-        e["weight_config"]["数学"]["full"] = 150; e["weight_config"]["数学"]["weight"] = 1.0;
-        e["weight_config"]["英语"]["full"] = 150; e["weight_config"]["英语"]["weight"] = 1.0;
-        e["weight_config"]["物理"]["full"] = 100; e["weight_config"]["物理"]["weight"] = 0.8;
-        e["weight_config"]["化学"]["full"] = 100; e["weight_config"]["化学"]["weight"] = 0.8;
-        exams.push_back(e);
-        // Second exam
-        json e2;
-        e2["id"] = "EXAM2";
-        e2["name"] = "高一上学期期末考试";
-        e2["date"] = "2026-01-15";
-        e2["subjects"] = {"语文","数学","英语","物理","化学","生物","历史","政治"};
-        e2["status"] = "published";
-        e2["weight_config"]["语文"]["full"] = 150; e2["weight_config"]["语文"]["weight"] = 1.0;
-        e2["weight_config"]["数学"]["full"] = 150; e2["weight_config"]["数学"]["weight"] = 1.0;
-        e2["weight_config"]["英语"]["full"] = 150; e2["weight_config"]["英语"]["weight"] = 1.0;
-        e2["weight_config"]["物理"]["full"] = 100; e2["weight_config"]["物理"]["weight"] = 0.8;
-        e2["weight_config"]["化学"]["full"] = 100; e2["weight_config"]["化学"]["weight"] = 0.8;
-        e2["weight_config"]["生物"]["full"] = 100; e2["weight_config"]["生物"]["weight"] = 0.7;
-        e2["weight_config"]["历史"]["full"] = 100; e2["weight_config"]["历史"]["weight"] = 0.6;
-        e2["weight_config"]["政治"]["full"] = 100; e2["weight_config"]["政治"]["weight"] = 0.6;
-        exams.push_back(e2);
+        struct ExamDef { std::string id,name,date; std::vector<std::string> subs; };
+        std::vector<ExamDef> examDefs = {
+            {"EXAM1","高一上学期期中考试","2025-11-10",{"语文","数学","英语","物理","化学"}},
+            {"EXAM2","高一上学期第二次月考","2025-12-20",{"语文","数学","英语","物理","化学","生物","历史"}},
+            {"EXAM3","高一上学期期末考试","2026-01-15",{"语文","数学","英语","物理","化学","生物","历史","政治","地理"}}
+        };
+        std::vector<int> fullScores = {150,150,150,100,100,100,100,100,100};
+        for (auto& ed : examDefs) {
+            json e;
+            e["id"] = ed.id;
+            e["name"] = ed.name;
+            e["date"] = ed.date;
+            e["subjects"] = ed.subs;
+            e["status"] = "published";
+            e["created_at"] = util::getCurrentTime();
+            for (size_t si = 0; si < ed.subs.size(); si++) {
+                std::string sub = ed.subs[si];
+                int full = 100;
+                for (size_t fi = 0; fi < fullScores.size(); fi++) {
+                    if (fi < ed.subs.size()) {
+                        if (sub == "语文" || sub == "数学" || sub == "英语") full = 150;
+                        else full = 100;
+                    }
+                }
+                double weight = (sub=="语文"||sub=="数学"||sub=="英语")?1.0:(sub=="物理"||sub=="化学")?0.8:0.6;
+                e["weight_config"][sub]["full"] = full;
+                e["weight_config"][sub]["weight"] = weight;
+            }
+            exams.push_back(e);
+        }
         util::writeJSON("exams.json", exams);
     }
 
+    // ========== GRADES (generated with ability-based variation) ==========
     if (!fileOrDirExists("data/grades.json")) {
         json grades = json::array();
-        auto addGrade = [&](const std::string& sid, const std::string& eid, const json& scores) {
+        auto addGr = [&](const std::string& sid, const std::string& eid, const json& scores) {
             json g;
-            g["student_id"] = sid;
-            g["exam_id"] = eid;
-            g["scores"] = scores;
-            g["comments"] = json::object();
-            g["is_makeup"] = false;
-            g["submitted_by"] = "admin";
+            g["student_id"] = sid; g["exam_id"] = eid;
+            g["scores"] = scores; g["comments"] = json::object();
+            g["is_makeup"] = false; g["submitted_by"] = "admin";
             g["submitted_at"] = util::getCurrentTime();
             grades.push_back(g);
         };
-        json s1 = {{"语文", "120"}, {"数学", "135"}, {"英语", "110"}, {"物理", "85"}, {"化学", "90"}};
-        json s2 = {{"语文", "105"}, {"数学", "142"}, {"英语", "125"}, {"物理", "78"}, {"化学", "82"}};
-        json s3 = {{"语文", "98"}, {"数学", "88"}, {"英语", "105"}, {"物理", "92"}, {"化学", "76"}};
-        json s4 = {{"语文", "115"}, {"数学", "120"}, {"英语", "118"}, {"物理", "70"}, {"化学", "88"}};
-        json s5 = {{"语文", "130"}, {"数学", "95"}, {"英语", "100"}, {"物理", "88"}, {"化学", "95"}};
-        json s6 = {{"语文", "108"}, {"数学", "115"}, {"英语", "90"}, {"物理", "65"}, {"化学", "70"}};
-        json s7 = {{"语文", "122"}, {"数学", "130"}, {"英语", "115"}, {"物理", "80"}, {"化学", "85"}};
-        json s8 = {{"语文", "95"}, {"数学", "78"}, {"英语", "88"}, {"物理", "75"}, {"化学", "65"}};
-        addGrade("S2024001", "EXAM1", s1);
-        addGrade("S2024002", "EXAM1", s2);
-        addGrade("S2024003", "EXAM1", s3);
-        addGrade("S2024004", "EXAM1", s4);
-        addGrade("S2024005", "EXAM1", s5);
-        addGrade("S2024006", "EXAM1", s6);
-        addGrade("S2024007", "EXAM1", s7);
-        addGrade("S2024008", "EXAM1", s8);
-        // EXAM2 grades
-        json e2_s1 = {{"语文","125"},{"数学","138"},{"英语","115"},{"物理","88"},{"化学","92"},{"生物","78"},{"历史","72"},{"政治","80"}};
-        json e2_s2 = {{"语文","108"},{"数学","145"},{"英语","128"},{"物理","80"},{"化学","85"},{"生物","82"},{"历史","65"},{"政治","70"}};
-        json e2_s3 = {{"语文","102"},{"数学","92"},{"英语","108"},{"物理","95"},{"化学","78"},{"生物","88"},{"历史","75"},{"政治","72"}};
-        json e2_s4 = {{"语文","118"},{"数学","122"},{"英语","120"},{"物理","72"},{"化学","90"},{"生物","70"},{"历史","68"},{"政治","75"}};
-        json e2_s5 = {{"语文","135"},{"数学","98"},{"英语","105"},{"物理","90"},{"化学","96"},{"生物","85"},{"历史","78"},{"政治","82"}};
-        json e2_s6 = {{"语文","110"},{"数学","118"},{"英语","95"},{"物理","68"},{"化学","72"},{"生物","65"},{"历史","70"},{"政治","65"}};
-        json e2_s7 = {{"语文","128"},{"数学","135"},{"英语","118"},{"物理","82"},{"化学","88"},{"生物","80"},{"历史","72"},{"政治","76"}};
-        json e2_s8 = {{"语文","98"},{"数学","82"},{"英语","90"},{"物理","78"},{"化学","68"},{"生物","72"},{"历史","60"},{"政治","62"}};
-        addGrade("S2024001","EXAM2",e2_s1);
-        addGrade("S2024002","EXAM2",e2_s2);
-        addGrade("S2024003","EXAM2",e2_s3);
-        addGrade("S2024004","EXAM2",e2_s4);
-        addGrade("S2024005","EXAM2",e2_s5);
-        addGrade("S2024006","EXAM2",e2_s6);
-        addGrade("S2024007","EXAM2",e2_s7);
-        addGrade("S2024008","EXAM2",e2_s8);
+        // Score formula: base depends on ability level (1=excellent ~85-100%, 5=weak ~30-60%)
+        // plus subject-specific variation and exam difficulty variation
+        auto genScore = [](int level, int full, int variation, int difficulty) -> std::string {
+            // level 1->90-100% range, level 2->80-95%, level 3->65-85%, level 4->50-75%, level 5->30-60%
+            int basePct[] = {95, 85, 75, 60, 45}; // midpoints for each level
+            int range2[] = {12, 16, 18, 22, 28}; // variation range per level
+            int pct = basePct[level-1] + (variation % range2[level-1]) - (range2[level-1]/2) - difficulty * 3;
+            if (pct > 99) pct = 99;
+            if (pct < 15) pct = 15;
+            int score = (full * pct) / 100;
+            return std::to_string(score);
+        };
+
+        for (size_t ei = 0; ei < 3; ei++) {
+            std::string eid = "EXAM" + std::to_string(ei+1);
+            int difficulty = (ei == 0) ? 0 : (ei == 1) ? 1 : 2; // exams get harder
+            // For exam 1 (期中): 5 subjects; exam2 (月考): 7; exam3 (期末): 9
+            std::vector<std::string> subs = (ei==0)?
+                std::vector<std::string>{"语文","数学","英语","物理","化学"}:
+                (ei==1)?
+                std::vector<std::string>{"语文","数学","英语","物理","化学","生物","历史"}:
+                std::vector<std::string>{"语文","数学","英语","物理","化学","生物","历史","政治","地理"};
+
+            for (size_t si = 0; si < allStuIds.size(); si++) {
+                json scores;
+                for (size_t subi = 0; subi < subs.size(); subi++) {
+                    int full = (subs[subi]=="语文"||subs[subi]=="数学"||subs[subi]=="英语")?150:100;
+                    int variation = (si * 7 + subi * 13 + ei * 17) % 101; // deterministic "random"
+                    // Slightly better scores on 期末 (studying effect)
+                    int adj = allStuLevels[si];
+                    if (ei == 2) adj = std::max(1, adj-1); // improvement over year
+                    scores[subs[subi]] = genScore(adj, full, variation, difficulty);
+                }
+                addGr(allStuIds[si], eid, scores);
+            }
+        }
         util::writeJSON("grades.json", grades);
     }
 
+    // ========== ERRORS (80+ records) ==========
     if (!fileOrDirExists("data/errors.json")) {
         json errors = json::array();
-        auto addErr = [&](const std::string& sid, const std::string& eid, const std::string& sub, const std::string& q, const std::string& wa, const std::string& ca, const std::string& et, const std::string& kp) {
+        std::vector<std::string> errTypes = {"概念不清","计算错误","审题失误","知识遗忘","方法不当","粗心大意"};
+        auto addErr = [&](const std::string& sid, const std::string& eid, const std::string& sub,
+                          const std::string& q, const std::string& wa, const std::string& ca,
+                          const std::string& et, const std::string& kp) {
             json err;
-            err["student_id"] = sid; err["exam_id"] = eid; err["subject"] = sub;
-            err["question"] = q; err["wrong_answer"] = wa; err["correct_answer"] = ca;
-            err["error_type"] = et; err["knowledge_point"] = kp;
-            err["created_at"] = util::getCurrentTime();
+            err["student_id"]=sid; err["exam_id"]=eid; err["subject"]=sub;
+            err["question"]=q; err["wrong_answer"]=wa; err["correct_answer"]=ca;
+            err["error_type"]=et; err["knowledge_point"]=kp;
+            err["created_at"]=util::getCurrentTime();
             errors.push_back(err);
         };
-        addErr("S2024001","EXAM1","数学","第22题 函数最值", "f(x)=x^2-2x", "f(x)=x^2-4x+4", "计算错误", "二次函数最值问题");
-        addErr("S2024001","EXAM1","英语","完形填空 第35题", "was", "were", "概念不清", "虚拟语气");
-        addErr("S2024001","EXAM1","物理","第15题 力学", "F=mg", "F=2mg", "审题失误", "受力分析");
-        addErr("S2024002","EXAM1","语文","阅读理解 第8题", "表达了思乡之情", "表达了壮志未酬的悲愤", "概念不清", "诗歌鉴赏-情感分析");
-        addErr("S2024002","EXAM1","物理","第14题 电路", "I=0.5A", "I=1A", "计算错误", "并联电路电流计算");
-        addErr("S2024003","EXAM1","数学","第18题 三角函数", "sin30°=0.5", "sin30°=0.5 无错误", "概念不清", "特殊角三角函数值");
-        addErr("S2024003","EXAM1","化学","第10题 化学方程式", "Na+H2O=NaOH", "2Na+2H2O=2NaOH+H2", "粗心大意", "化学方程式配平");
-        addErr("S2024003","EXAM1","英语","语法填空 第42题", "go", "going", "知识遗忘", "动名词作宾语");
-        addErr("S2024004","EXAM1","数学","第20题 概率", "1/3", "2/3", "方法不当", "条件概率计算");
-        addErr("S2024004","EXAM1","化学","第8题 离子反应", "Cu2+", "Fe3+", "概念不清", "离子共存判断");
-        addErr("S2024005","EXAM1","语文","作文 立意", "跑题", "紧扣材料中心", "审题失误", "材料作文审题");
-        addErr("S2024005","EXAM1","数学","第16题 解析几何", "y=x", "y=2x+1", "计算错误", "直线方程求解");
-        addErr("S2024006","EXAM1","物理","第12题 热学", "Q=cmΔt", "无错误", "方法不当", "热学计算");
-        addErr("S2024006","EXAM1","英语","阅读理解C篇 第28题", "C", "A", "审题失误", "事实细节题");
-        addErr("S2024006","EXAM1","化学","第6题 有机物", "乙醇", "乙酸", "知识遗忘", "有机物性质");
-        addErr("S2024006","EXAM1","物理","第17题 电磁", "B=0.5T", "B=1T", "计算错误", "安培力计算");
-        addErr("S2024007","EXAM1","数学","第21题 导数", "f'(x)=2x", "f'(x)=3x^2-2", "方法不当", "导数运算法则");
-        addErr("S2024007","EXAM1","英语","语法填空 第45题", "has", "have", "粗心大意", "主谓一致");
-        addErr("S2024008","EXAM1","数学","第5题 集合", "{1,2}", "{1,2,3}", "概念不清", "集合运算");
-        addErr("S2024008","EXAM1","语文","古诗词默写 第3题", "错误默写", "大漠孤烟直长河落日圆", "知识遗忘", "古诗词默写-王维");
-        addErr("S2024008","EXAM1","化学","第12题 实验操作", "先加酸", "先加碱", "方法不当", "酸碱中和滴定");
-        addErr("S2024008","EXAM1","物理","第19题 动量", "mv", "m1v1+m2v2=m1v1'+m2v2'", "知识遗忘", "动量守恒定律");
+        // Generate errors: for each student with level >=3 (weaker students), pick 2-5 errors per exam
+        for (size_t ei = 0; ei < 3; ei++) {
+            std::string eid = "EXAM" + std::to_string(ei+1);
+            std::vector<std::string> subs = (ei==0)?
+                std::vector<std::string>{"语文","数学","英语","物理","化学"}:
+                (ei==1)?
+                std::vector<std::string>{"语文","数学","英语","物理","化学","生物","历史"}:
+                std::vector<std::string>{"语文","数学","英语","物理","化学","生物","历史","政治","地理"};
+            for (size_t si = 0; si < allStuIds.size(); si++) {
+                int lvl = allStuLevels[si];
+                int errCount = (lvl <= 2) ? (lvl+ (si%2)) : (lvl + (si%3)); // more errors for weaker students
+                errCount = errCount > 5 ? 5 : errCount;
+                for (int ec = 0; ec < errCount; ec++) {
+                    int subi = (si + ec + ei) % subs.size();
+                    std::string sub = subs[subi];
+                    std::string et = errTypes[(si + ec + ei*7) % errTypes.size()];
+                    std::string qnum = "第" + std::to_string(10+ec*3+si%5) + "题";
+                    std::string kp = sub + "-" + (sub=="语文"?"阅读理解":sub=="数学"?"函数与导数":sub=="英语"?"语法填空":sub=="物理"?"力学分析":sub=="化学"?"化学方程式":sub=="生物"?"遗传与变异":sub=="历史"?"中国古代史":sub=="政治"?"经济生活":"自然地理");
+                    addErr(allStuIds[si], eid, sub, qnum+" "+kp, "错误答案A", "正确答案B", et, kp);
+                }
+            }
+        }
         util::writeJSON("errors.json", errors);
     }
 
-    std::cout << "Data seeding complete." << std::endl;
+    // ========== GOALS ==========
+    if (!fileOrDirExists("data/goals.json")) {
+        json goals = json::array();
+        for (size_t si = 0; si < std::min((size_t)15, allStuIds.size()); si++) {
+            json g;
+            g["student_id"] = allStuIds[si];
+            g["subject"] = allStuLevels[si] >= 3 ? "数学" : "英语";
+            g["target_score"] = (allStuLevels[si] >= 3) ? "120" : "140";
+            g["exam_name"] = "高一上学期期末考试";
+            g["deadline"] = "2026-01-15";
+            g["created_at"] = util::getCurrentTime();
+            goals.push_back(g);
+        }
+        util::writeJSON("goals.json", goals);
+    }
+
+    // ========== POINTS ==========
+    if (!fileOrDirExists("data/points.json")) {
+        json points = json::array();
+        for (size_t si = 0; si < 10; si++) {
+            json p;
+            p["student_id"] = allStuIds[si];
+            p["points"] = 50 + (int)(si * 15);
+            p["history"] = json::array();
+            json h;
+            h["reason"] = "登录系统"; h["points_added"] = 10; h["timestamp"] = util::getCurrentTime();
+            p["history"].push_back(h);
+            points.push_back(p);
+        }
+        util::writeJSON("points.json", points);
+    }
+
+    // ========== CHECKINS ==========
+    if (!fileOrDirExists("data/checkins.json")) {
+        json checkins = json::array();
+        for (size_t si = 0; si < 8; si++) {
+            for (int d = 1; d <= 5; d++) {
+                json c;
+                c["student_id"] = allStuIds[si];
+                c["mood"] = 3 + (int)((si+d)%3);
+                c["note"] = "心情不错";
+                c["timestamp"] = "2026-05-" + std::to_string(20+d);
+                checkins.push_back(c);
+            }
+        }
+        util::writeJSON("checkins.json", checkins);
+    }
+
+    std::cout << "Data seeding complete (50 students, 3 exams, 9 classes, rich data)." << std::endl;
 }
 
 int main() {
@@ -657,8 +770,13 @@ int main() {
         res.set_content(enhance::getCheckins(getParam(req, "student_id")).dump(), "application/json");
     });
 
-    // Serve static files
-    svr.set_mount_point("/", "./web");
+    // Serve static files (use absolute path based on exe location)
+    char exePath[MAX_PATH];
+    GetModuleFileNameA(NULL, exePath, MAX_PATH);
+    std::string exeDir(exePath);
+    exeDir = exeDir.substr(0, exeDir.find_last_of("\\/"));
+    std::string webDir = exeDir + "\\web";
+    svr.set_mount_point("/", webDir.c_str());
 
     std::cout << "EduGrade Server started on http://localhost:8080" << std::endl;
     svr.listen("0.0.0.0", 8080);

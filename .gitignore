@@ -1,11 +1,16 @@
 # Build outputs
 *.exe
+edugrade
 *.obj
+*.o
 *.ilk
 *.pdb
 *.lib
 *.exp
 *.dll
+*.dylib
+*.so
+.DS_Store
 
 # IDE
 .vs/
