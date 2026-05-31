@@ -69,7 +69,12 @@ std::string genToken() {
 
 std::string getCurrentTime() {
     auto t = std::time(nullptr);
-    auto tm = *std::localtime(&t);
+    std::tm tm;
+#ifdef _WIN32
+    localtime_s(&tm, &t);
+#else
+    localtime_r(&t, &tm);
+#endif
     std::ostringstream oss;
     oss << std::put_time(&tm, "%Y-%m-%d %H:%M:%S");
     return oss.str();

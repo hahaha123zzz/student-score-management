@@ -101,7 +101,7 @@ json exportCSV(const std::string& examId) {
 
     std::string csv = "学号,姓名";
     for (auto& s : subjects) csv += "," + s;
-    csv += "\n";
+    csv += "\r\n";
 
     for (auto& g : grades) {
         if (g["exam_id"] != examId) continue;
@@ -116,7 +116,7 @@ json exportCSV(const std::string& examId) {
             if (g["scores"].contains(s))
                 csv += g["scores"][s].get<std::string>();
         }
-        csv += "\n";
+        csv += "\r\n";
     }
 
     json resp;

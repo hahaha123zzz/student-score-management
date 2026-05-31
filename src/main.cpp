@@ -16,6 +16,16 @@
 #else
 #include <unistd.h>
 #include <sys/stat.h>
+#include <limits.h>
+#include <stdlib.h>
+#include <stdint.h>
+#ifdef __APPLE__
+#include <mach-o/dyld.h>
+#endif
+#endif
+
+#ifndef PATH_MAX
+#define PATH_MAX 4096
 #endif
 
 using namespace httplib;
@@ -771,11 +781,38 @@ int main() {
     });
 
     // Serve static files (use absolute path based on exe location)
+#ifdef _WIN32
     char exePath[MAX_PATH];
     GetModuleFileNameA(NULL, exePath, MAX_PATH);
     std::string exeDir(exePath);
     exeDir = exeDir.substr(0, exeDir.find_last_of("\\/"));
     std::string webDir = exeDir + "\\web";
+#elif defined(__APPLE__)
+    char exePath[PATH_MAX];
+    uint32_t bufSize = PATH_MAX;
+    if (_NSGetExecutablePath(exePath, &bufSize) != 0) {
+        std::cerr << "Fatal: failed to get executable path" << std::endl;
+        return 1;
+    }
+    char* resolved = realpath(exePath, NULL);
+    std::string exeDir(resolved ? resolved : exePath);
+    if (resolved) free(resolved);
+    size_t pos = exeDir.find_last_of('/');
+    exeDir = (pos != std::string::npos) ? exeDir.substr(0, pos) : exeDir;
+    std::string webDir = exeDir + "/web";
+#else
+    char exePath[PATH_MAX];
+    ssize_t len = readlink("/proc/self/exe", exePath, sizeof(exePath) - 1);
+    if (len == -1) {
+        std::cerr << "Fatal: failed to get executable path" << std::endl;
+        return 1;
+    }
+    exePath[len] = '\0';
+    std::string exeDir(exePath);
+    size_t pos = exeDir.find_last_of('/');
+    exeDir = (pos != std::string::npos) ? exeDir.substr(0, pos) : exeDir;
+    std::string webDir = exeDir + "/web";
+#endif
     svr.set_mount_point("/", webDir.c_str());
 
     std::cout << "EduGrade Server started on http://localhost:8080" << std::endl;
