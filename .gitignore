@@ -1,0 +1,24 @@
+# Build outputs
+*.exe
+*.obj
+*.ilk
+*.pdb
+*.lib
+*.exp
+*.dll
+
+# IDE
+.vs/
+.vscode/
+*.user
+*.suo
+
+# CMake
+build/
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+
+# Temp files
+err.txt
+out.txt

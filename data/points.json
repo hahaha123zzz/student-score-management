@@ -1,0 +1,112 @@
+[
+  {
+    "history": [
+      {
+        "points_added": 10,
+        "reason": "登录系统",
+        "timestamp": "2026-05-31 11:12:25"
+      }
+    ],
+    "points": 50,
+    "student_id": "S2024001"
+  },
+  {
+    "history": [
+      {
+        "points_added": 10,
+        "reason": "登录系统",
+        "timestamp": "2026-05-31 11:12:25"
+      }
+    ],
+    "points": 65,
+    "student_id": "S2024002"
+  },
+  {
+    "history": [
+      {
+        "points_added": 10,
+        "reason": "登录系统",
+        "timestamp": "2026-05-31 11:12:25"
+      }
+    ],
+    "points": 80,
+    "student_id": "S2024003"
+  },
+  {
+    "history": [
+      {
+        "points_added": 10,
+        "reason": "登录系统",
+        "timestamp": "2026-05-31 11:12:25"
+      }
+    ],
+    "points": 95,
+    "student_id": "S2024004"
+  },
+  {
+    "history": [
+      {
+        "points_added": 10,
+        "reason": "登录系统",
+        "timestamp": "2026-05-31 11:12:25"
+      }
+    ],
+    "points": 110,
+    "student_id": "S2024005"
+  },
+  {
+    "history": [
+      {
+        "points_added": 10,
+        "reason": "登录系统",
+        "timestamp": "2026-05-31 11:12:25"
+      }
+    ],
+    "points": 125,
+    "student_id": "S2024006"
+  },
+  {
+    "history": [
+      {
+        "points_added": 10,
+        "reason": "登录系统",
+        "timestamp": "2026-05-31 11:12:25"
+      }
+    ],
+    "points": 140,
+    "student_id": "S2024007"
+  },
+  {
+    "history": [
+      {
+        "points_added": 10,
+        "reason": "登录系统",
+        "timestamp": "2026-05-31 11:12:25"
+      }
+    ],
+    "points": 155,
+    "student_id": "S2024008"
+  },
+  {
+    "history": [
+      {
+        "points_added": 10,
+        "reason": "登录系统",
+        "timestamp": "2026-05-31 11:12:25"
+      }
+    ],
+    "points": 170,
+    "student_id": "S2024009"
+  },
+  {
+    "history": [
+      {
+        "points_added": 10,
+        "reason": "登录系统",
+        "timestamp": "2026-05-31 11:12:25"
+      }
+    ],
+    "points": 185,
+    "student_id": "S2024010"
+  }
+]

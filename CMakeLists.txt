@@ -20,6 +20,8 @@ add_executable(edugrade
     src/exam.cpp
     src/grade.cpp
     src/stats.cpp
+    src/extra.cpp
+    src/enhance.cpp
 )
 
 set_target_properties(edugrade PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
