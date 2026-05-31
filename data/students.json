@@ -1,0 +1,119 @@
+[
+  {
+    "birthday": "2008-01-01",
+    "class": "高一1班",
+    "enrolled_at": "2024-09-01",
+    "gender": "男",
+    "id": "S2024001",
+    "name": "张三",
+    "parent_id": "P2024001"
+  },
+  {
+    "birthday": "2008-01-01",
+    "class": "高一1班",
+    "enrolled_at": "2024-09-01",
+    "gender": "女",
+    "id": "S2024002",
+    "name": "李四",
+    "parent_id": ""
+  },
+  {
+    "birthday": "2008-01-01",
+    "class": "高一1班",
+    "enrolled_at": "2024-09-01",
+    "gender": "男",
+    "id": "S2024003",
+    "name": "王五",
+    "parent_id": ""
+  },
+  {
+    "birthday": "2008-01-01",
+    "class": "高一2班",
+    "enrolled_at": "2024-09-01",
+    "gender": "女",
+    "id": "S2024004",
+    "name": "赵六",
+    "parent_id": ""
+  },
+  {
+    "birthday": "2008-01-01",
+    "class": "高一2班",
+    "enrolled_at": "2024-09-01",
+    "gender": "男",
+    "id": "S2024005",
+    "name": "孙七",
+    "parent_id": ""
+  },
+  {
+    "birthday": "2008-01-01",
+    "class": "高一2班",
+    "enrolled_at": "2024-09-01",
+    "gender": "女",
+    "id": "S2024006",
+    "name": "周八",
+    "parent_id": ""
+  },
+  {
+    "birthday": "2008-01-01",
+    "class": "高一3班",
+    "enrolled_at": "2024-09-01",
+    "gender": "男",
+    "id": "S2024007",
+    "name": "吴九",
+    "parent_id": ""
+  },
+  {
+    "birthday": "2008-01-01",
+    "class": "高一3班",
+    "enrolled_at": "2024-09-01",
+    "gender": "女",
+    "id": "S2024008",
+    "name": "郑十",
+    "parent_id": ""
+  },
+  {
+    "birthday": "2008-01-01",
+    "class": "高一3班",
+    "enrolled_at": "2024-09-01",
+    "gender": "男",
+    "id": "S2024009",
+    "name": "刘十二",
+    "parent_id": ""
+  },
+  {
+    "birthday": "2008-01-01",
+    "class": "高一1班",
+    "enrolled_at": "2024-09-01",
+    "gender": "女",
+    "id": "S2024010",
+    "name": "陈十三",
+    "parent_id": ""
+  },
+  {
+    "birthday": "2008-01-01",
+    "class": "高一2班",
+    "enrolled_at": "2024-09-01",
+    "gender": "男",
+    "id": "S2024011",
+    "name": "杨十四",
+    "parent_id": ""
+  },
+  {
+    "birthday": "2008-01-01",
+    "class": "高一3班",
+    "enrolled_at": "2024-09-01",
+    "gender": "女",
+    "id": "S2024012",
+    "name": "黄十五",
+    "parent_id": ""
+  },
+  {
+    "birthday": "",
+    "class": "??1?",
+    "enrolled_at": "2026-05-31 10:24:18",
+    "gender": "?",
+    "id": "test123",
+    "name": "????",
+    "parent_id": ""
+  }
+]

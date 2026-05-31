@@ -1,0 +1,1584 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduGrade - 管理后台</title>
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+</head>
+<body>
+
+<div class="app">
+
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <h2><span>Edu</span>Grade</h2>
+    <div class="ver">v2.0</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-group">核心功能</div>
+    <a class="nv" data-section="dashboard-section"><span class="nv">&#128202;</span> 首页仪表盘</a>
+    <a class="nv" data-section="students-section"><span class="nv">&#128100;</span> 学生管理</a>
+    <a class="nv" data-section="classes-section"><span class="nv">&#127979;</span> 班级管理</a>
+    <a class="nv" data-section="subjects-section"><span class="nv">&#128218;</span> 科目管理</a>
+    <div class="nav-group">考试与成绩</div>
+    <a class="nv" data-section="exams-section"><span class="nv">&#128221;</span> 考试管理</a>
+    <a class="nv" data-section="grades-section"><span class="nv">&#128200;</span> 成绩管理</a>
+    <a class="nv" data-section="stats-section"><span class="nv">&#128201;</span> 统计分析</a>
+    <a class="nv" data-section="errors-section"><span class="nv">&#10060;</span> 错题管理</a>
+    <div class="nav-group">数据分析</div>
+    <a class="nv" data-section="ability-section"><span class="nv">&#127919;</span> 能力图谱</a>
+    <a class="nv" data-section="report-section"><span class="nv">&#128203;</span> 学情报告</a>
+    <a class="nv" data-section="suggest-section"><span class="nv">&#128161;</span> 学习建议</a>
+    <div class="nav-group">系统管理</div>
+    <a class="nv" data-section="users-section"><span class="nv">&#128101;</span> 用户管理</a>
+    <a class="nv" data-section="logs-section"><span class="nv">&#128196;</span> 操作日志</a>
+    <a class="nv" data-section="password-section"><span class="nv">&#128273;</span> 修改密码</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="av" id="sidebarAvatar">A</div>
+    <div class="ui">
+      <div class="un" id="sidebarUser">Admin</div>
+      <div class="ur">管理员</div>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <h2 id="pageTitle">首页仪表盘</h2>
+    <div class="topbar-actions">
+      <button class="btn btn-icon" onclick="toggleTheme()" title="切换主题">&#9788;</button>
+      <button class="btn btn-outline btn-sm" onclick="window.location.href='login.html'">返回登录页</button>
+      <button class="btn btn-outline btn-sm" onclick="logout()">退出登录</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ====== 1. Dashboard ====== -->
+    <section class="page-section active" id="dashboard-section">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="si">&#128100;</div><div class="stat-info"><h3 id="statStudents">-</h3><p>学生总数</p></div></div>
+        <div class="stat-card"><div class="si">&#127979;</div><div class="stat-info"><h3 id="statClasses">-</h3><p>班级总数</p></div></div>
+        <div class="stat-card"><div class="si">&#128221;</div><div class="stat-info"><h3 id="statExams">-</h3><p>考试总数</p></div></div>
+        <div class="stat-card"><div class="si">&#128218;</div><div class="stat-info"><h3 id="statSubjects">-</h3><p>科目总数</p></div></div>
+        <div class="stat-card"><div class="si">&#9888;</div><div class="stat-info"><h3 id="statWarnings">-</h3><p>预警数量</p></div></div>
+      </div>
+      <div class="chart-row">
+        <div class="chart-box"><div class="card-title">班级人数统计</div><canvas id="chartEnroll"></canvas></div>
+        <div class="chart-box"><div class="card-title">最近考试概览</div><div id="recentExamsList" style="max-height:300px;overflow-y:auto;"></div></div>
+      </div>
+    </section>
+
+    <!-- ====== 2. Students ====== -->
+    <section class="page-section" id="students-section">
+      <div class="card">
+        <div class="card-header"><span class="card-title">学生列表</span><button class="btn btn-primary btn-sm" id="btnAddStudent">+ 添加学生</button></div>
+        <div class="card-body">
+          <div class="filter-row">
+            <input type="text" id="studentSearch" placeholder="搜索学号或姓名..." style="width:200px;">
+            <select id="studentClassFilter" style="width:160px;"><option value="">全部班级</option></select>
+            <button class="btn btn-outline btn-sm" id="btnStudentSearch">搜索</button>
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>学号</th><th>姓名</th><th>性别</th><th>班级</th><th>入学年份</th><th>操作</th></tr></thead>
+            <tbody id="studentTableBody"><tr><td colspan="6"><div class="loading"><span class="spinner"></span> 加载中...</div></td></tr></tbody>
+          </table></div>
+          <div class="pagination" id="studentPagination"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== 3. Classes ====== -->
+    <section class="page-section" id="classes-section">
+      <div class="card">
+        <div class="card-header"><span class="card-title">班级列表</span><button class="btn btn-primary btn-sm" id="btnAddClass">+ 添加班级</button></div>
+        <div class="card-body">
+          <div class="table-wrap"><table>
+            <thead><tr><th>ID</th><th>班级名称</th><th>年级</th><th>专业</th><th>操作</th></tr></thead>
+            <tbody id="classTableBody"><tr><td colspan="5"><div class="loading"><span class="spinner"></span> 加载中...</div></td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== 4. Subjects ====== -->
+    <section class="page-section" id="subjects-section">
+      <div class="card">
+        <div class="card-header"><span class="card-title">科目列表</span><button class="btn btn-primary btn-sm" id="btnAddSubject">+ 添加科目</button></div>
+        <div class="card-body">
+          <div class="table-wrap"><table>
+            <thead><tr><th>ID</th><th>科目名称</th><th>操作</th></tr></thead>
+            <tbody id="subjectTableBody"><tr><td colspan="3"><div class="loading"><span class="spinner"></span> 加载中...</div></td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== 5. Exams ====== -->
+    <section class="page-section" id="exams-section">
+      <div class="card">
+        <div class="card-header"><span class="card-title">考试列表</span><button class="btn btn-primary btn-sm" id="btnAddExam">+ 创建考试</button></div>
+        <div class="card-body">
+          <div class="filter-row">
+            <select id="examStatusFilter"><option value="">全部状态</option><option value="draft">草稿</option><option value="published">已发布</option><option value="locked">已锁定</option></select>
+            <button class="btn btn-outline btn-sm" id="btnExamFilter">筛选</button>
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>ID</th><th>考试名称</th><th>状态</th><th>满分</th><th>及格线</th><th>科目</th><th>操作</th></tr></thead>
+            <tbody id="examTableBody"><tr><td colspan="7"><div class="loading"><span class="spinner"></span> 加载中...</div></td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== 6. Grades ====== -->
+    <section class="page-section" id="grades-section">
+      <div class="card">
+        <div class="card-header"><span class="card-title">成绩录入</span></div>
+        <div class="card-body">
+          <div class="exam-select-row">
+            <select id="gradeExamSelect" style="min-width:200px;"><option value="">-- 选择考试 --</option></select>
+            <button class="btn btn-primary btn-sm" id="btnRefreshGrades">刷新</button>
+            <button class="btn btn-outline btn-sm" id="btnCsvImport">CSV导入</button>
+            <button class="btn btn-outline btn-sm" id="btnExportCsv">CSV导出</button>
+            <button class="btn btn-warning btn-sm" id="btnLockGrades" style="display:none;">锁定成绩</button>
+          </div>
+          <div id="gradeStatusInfo" style="display:none;"></div>
+          <div class="table-wrap" id="gradeTableWrapper">
+            <table class="grade-table" id="gradeTable">
+              <thead id="gradeTableHead"></thead>
+              <tbody id="gradeTableBody"><tr><td colspan="2"><div class="empty"><div class="ei">&#128218;</div><p>请选择考试后查看</p></div></td></tr></tbody>
+            </table>
+          </div>
+          <div class="flex gap-8 mt-16">
+            <button class="btn btn-primary btn-sm" id="btnBatchSave" style="display:none;">批量保存成绩</button>
+            <button class="btn btn-outline btn-sm" id="btnMakeup" style="display:none;">补考录入</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== 7. Statistics ====== -->
+    <section class="page-section" id="stats-section">
+      <div class="card">
+        <div class="card-header"><span class="card-title">统计分析</span></div>
+        <div class="card-body">
+          <div class="exam-select-row">
+            <select id="statsExamSelect" style="min-width:200px;"><option value="">-- 选择考试 --</option></select>
+            <select id="statsSubjectFilter" style="display:none;min-width:150px;"><option value="">全部科目</option></select>
+          </div>
+          <div class="tabs">
+            <div class="tab active" data-tab="tab-rank">排名</div>
+            <div class="tab" data-tab="tab-class-compare">班级对比</div>
+            <div class="tab" data-tab="tab-distribution">成绩分布</div>
+            <div class="tab" data-tab="tab-warnings">预警</div>
+          </div>
+          <div id="tab-rank">
+            <div class="filter-row">
+              <select id="rankType"><option value="grade">年级排名</option><option value="class">班级排名</option><option value="subject">单科排名</option></select>
+              <select id="rankSubject" style="display:none;"><option value="">-- 选择科目 --</option></select>
+            </div>
+            <div class="table-wrap"><table class="rank-table">
+              <thead><tr><th>#</th><th>学号</th><th>姓名</th><th>班级</th><th>总分</th><th>平均分</th></tr></thead>
+              <tbody id="rankTableBody"><tr><td colspan="6"><div class="empty"><div class="ei">&#128200;</div><p>请选择考试查看排名</p></div></td></tr></tbody>
+            </table></div>
+          </div>
+          <div id="tab-class-compare" style="display:none;">
+            <div class="table-wrap"><table>
+              <thead id="classCompareHead"></thead>
+              <tbody id="classCompareBody"><tr><td colspan="2"><div class="empty"><div class="ei">&#127979;</div><p>请选择考试查看班级对比</p></div></td></tr></tbody>
+            </table></div>
+          </div>
+          <div id="tab-distribution" style="display:none;">
+            <div class="chart-box"><canvas id="chartDistribution"></canvas></div>
+          </div>
+          <div id="tab-warnings" style="display:none;">
+            <div class="table-wrap"><table>
+              <thead><tr><th>学生</th><th>班级</th><th>预警类型</th><th>科目</th><th>当前分数</th><th>详情</th></tr></thead>
+              <tbody id="warningsTableBody"><tr><td colspan="6"><div class="loading"><span class="spinner"></span> 加载中...</div></td></tr></tbody>
+            </table></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== 8. Errors (错题管理) ====== -->
+    <section class="page-section" id="errors-section">
+      <div class="card">
+        <div class="card-header"><span class="card-title">错题管理</span><button class="btn btn-primary btn-sm" id="btnAddError">+ 添加错题</button></div>
+        <div class="card-body">
+          <div class="filter-row">
+            <select id="errorStudentSelect"><option value="">-- 选择学生 --</option></select>
+            <select id="errorExamSelect"><option value="">-- 选择考试 --</option></select>
+            <select id="errorSubjectFilter"><option value="">全部科目</option></select>
+            <button class="btn btn-outline btn-sm" id="btnErrorSearch">搜索</button>
+          </div>
+          <div class="error-stats-grid" id="errorStatsCards" style="display:none;">
+            <div class="card"><div class="card-body"><div class="card-title">按错误类型统计</div><div id="errorByType" class="mt-8"></div></div></div>
+            <div class="card"><div class="card-body"><div class="card-title">按科目统计</div><div id="errorBySubject" class="mt-8"></div></div></div>
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>学生</th><th>考试</th><th>科目</th><th>题目</th><th>错误答案</th><th>正确答案</th><th>错误类型</th><th>知识点</th><th>操作</th></tr></thead>
+            <tbody id="errorTableBody"><tr><td colspan="9"><div class="loading"><span class="spinner"></span> 加载中...</div></td></tr></tbody>
+          </table></div>
+          <div class="pagination" id="errorPagination"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== 9. Ability (能力图谱) ====== -->
+    <section class="page-section" id="ability-section">
+      <div class="card">
+        <div class="card-header"><span class="card-title">能力图谱</span></div>
+        <div class="card-body">
+          <div class="filter-row">
+            <select id="abilityStudentSelect"><option value="">-- 选择学生 --</option></select>
+            <select id="abilityExamSelect"><option value="">-- 选择考试 --</option></select>
+            <button class="btn btn-outline btn-sm" id="btnAbilityLoad">加载</button>
+          </div>
+          <div id="abilityContent" style="display:none;">
+            <div class="chart-row">
+              <div class="chart-box"><canvas id="chartRadar"></canvas></div>
+              <div class="chart-box"><canvas id="chartImbalance"></canvas></div>
+            </div>
+            <div id="abilityDetails" class="mt-16"></div>
+          </div>
+          <div id="abilityEmpty"><div class="empty"><div class="ei">&#127919;</div><p>请选择学生和考试后查看能力图谱</p></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== 10. Report (学情报告) ====== -->
+    <section class="page-section" id="report-section">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">学情报告</span>
+          <span><button class="btn btn-outline btn-sm" id="btnPrintReport" style="display:none;">&#128424; 打印报告</button></span>
+        </div>
+        <div class="card-body">
+          <div class="filter-row no-print">
+            <select id="reportStudentSelect" style="min-width:180px;"><option value="">-- 选择学生 --</option></select>
+            <button class="btn btn-primary btn-sm" id="btnReportLoad">生成报告</button>
+          </div>
+          <div id="reportContent" class="report-container" style="display:none;"></div>
+          <div id="reportEmpty"><div class="empty"><div class="ei">&#128203;</div><p>请选择学生后生成学情报告</p></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== 11. Suggest (学习建议) ====== -->
+    <section class="page-section" id="suggest-section">
+      <div class="card">
+        <div class="card-header"><span class="card-title">学习建议</span></div>
+        <div class="card-body">
+          <div class="filter-row">
+            <select id="suggestStudentSelect" style="min-width:180px;"><option value="">-- 选择学生 --</option></select>
+            <button class="btn btn-primary btn-sm" id="btnSuggestLoad">生成建议</button>
+          </div>
+          <div id="suggestContent"></div>
+          <div id="suggestEmpty"><div class="empty"><div class="ei">&#128161;</div><p>请选择学生后查看个性化学习建议</p></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== 12. Users ====== -->
+    <section class="page-section" id="users-section">
+      <div class="card">
+        <div class="card-header"><span class="card-title">用户列表</span><button class="btn btn-primary btn-sm" id="btnAddUser">+ 添加用户</button></div>
+        <div class="card-body">
+          <div class="table-wrap"><table>
+            <thead><tr><th>ID</th><th>用户名</th><th>角色</th><th>电话</th><th>创建时间</th><th>操作</th></tr></thead>
+            <tbody id="userTableBody"><tr><td colspan="6"><div class="loading"><span class="spinner"></span> 加载中...</div></td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== 13. Logs ====== -->
+    <section class="page-section" id="logs-section">
+      <div class="card">
+        <div class="card-header"><span class="card-title">操作日志</span></div>
+        <div class="card-body">
+          <div class="filter-row">
+            <input type="text" id="logUserFilter" placeholder="按用户筛选..." style="width:200px;">
+            <button class="btn btn-outline btn-sm" id="btnLogSearch">搜索</button>
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>ID</th><th>用户</th><th>操作</th><th>详情</th><th>时间</th></tr></thead>
+            <tbody id="logTableBody"><tr><td colspan="5"><div class="loading"><span class="spinner"></span> 加载中...</div></td></tr></tbody>
+          </table></div>
+          <div class="pagination" id="logPagination"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== 14. Password ====== -->
+    <section class="page-section" id="password-section">
+      <div class="card" style="max-width:480px;">
+        <div class="card-header"><span class="card-title">修改密码</span></div>
+        <div class="card-body">
+          <div class="form-group"><label>当前密码</label><input type="password" id="oldPassword" placeholder="输入当前密码"></div>
+          <div class="form-group"><label>新密码</label><input type="password" id="newPassword" placeholder="输入新密码"></div>
+          <div class="form-group"><label>确认新密码</label><input type="password" id="confirmPassword" placeholder="再次输入新密码"></div>
+          <div id="pwdResult"></div>
+          <button class="btn btn-primary" id="btnChangePwd">修改密码</button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</main>
+</div>
+
+<!-- ========== MODALS ========== -->
+
+<!-- Student Modal -->
+<div class="modal-overlay" style="display:none;" id="modalStudent">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="studentModalTitle">添加学生</h3>
+      <button class="modal-close" data-close="modalStudent">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label>学号</label><input type="text" name="student_no" placeholder="输入学号"></div>
+      <div class="form-group"><label>姓名</label><input type="text" name="name" placeholder="输入姓名"></div>
+      <div class="form-row">
+        <div class="form-group"><label>性别</label><select name="gender"><option value="男">男</option><option value="女">女</option></select></div>
+        <div class="form-group"><label>班级</label><select name="class_id" id="studentFormClass"><option value="">-- 选择班级 --</option></select></div>
+      </div>
+      <div class="form-group"><label>入学年份</label><input type="number" name="enrollment_year" placeholder="如 2023"></div>
+      <input type="hidden" name="id">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline modal-close" data-close="modalStudent">取消</button>
+      <button class="btn btn-primary" id="btnSaveStudent">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Class Modal -->
+<div class="modal-overlay" style="display:none;" id="modalClass">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="classModalTitle">添加班级</h3>
+      <button class="modal-close" data-close="modalClass">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label>班级名称</label><input type="text" name="name" placeholder="输入班级名称"></div>
+      <div class="form-row">
+        <div class="form-group"><label>年级</label><select name="grade"><option value="1">高一</option><option value="2">高二</option><option value="3">高三</option></select></div>
+        <div class="form-group"><label>专业</label><input type="text" name="major" placeholder="如 理科"></div>
+      </div>
+      <input type="hidden" name="id">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline modal-close" data-close="modalClass">取消</button>
+      <button class="btn btn-primary" id="btnSaveClass">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Subject Modal -->
+<div class="modal-overlay" style="display:none;" id="modalSubject">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>添加科目</h3>
+      <button class="modal-close" data-close="modalSubject">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label>科目名称</label><input type="text" id="subjectNameInput" placeholder="输入科目名称"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline modal-close" data-close="modalSubject">取消</button>
+      <button class="btn btn-primary" id="btnSaveSubject">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Exam Modal -->
+<div class="modal-overlay" style="display:none;" id="modalExam">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h3 id="examModalTitle">创建考试</h3>
+      <button class="modal-close" data-close="modalExam">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label>考试名称</label><input type="text" name="name" placeholder="输入考试名称"></div>
+      <div class="form-row">
+        <div class="form-group"><label>满分</label><input type="number" name="full_score" value="750" min="0"></div>
+        <div class="form-group"><label>及格线</label><input type="number" name="pass_score" value="450" min="0"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>状态</label><select name="status"><option value="draft">草稿</option><option value="published">已发布</option></select></div>
+      </div>
+      <div style="font-size:13px;color:var(--text2);margin:12px 0 8px;font-weight:600;">考试科目及权重</div>
+      <div id="examSubjectChecks"></div>
+      <input type="hidden" name="id">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline modal-close" data-close="modalExam">取消</button>
+      <button class="btn btn-primary" id="btnSaveExam">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- CSV Import Modal -->
+<div class="modal-overlay" style="display:none;" id="modalCsvImport">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h3>CSV成绩导入</h3>
+      <button class="modal-close" data-close="modalCsvImport">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text2);margin-bottom:10px;">格式：学号,姓名,科目1分数,科目2分数,...（每行一个学生，按科目顺序排列）</p>
+      <textarea class="csv-area" id="csvContent" placeholder="2023001,张三,85,90,78,92&#10;2023002,李四,88,76,95,80"></textarea>
+      <input type="hidden" id="csvExamId">
+      <div id="csvResult" class="mt-16"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline modal-close" data-close="modalCsvImport">取消</button>
+      <button class="btn btn-primary" id="btnImportCsv">导入</button>
+    </div>
+  </div>
+</div>
+
+<!-- Makeup Modal -->
+<div class="modal-overlay" style="display:none;" id="modalMakeup">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h3>补考录入</h3>
+      <button class="modal-close" data-close="modalMakeup">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label>学生</label><select id="makeupStudent"><option value="">-- 选择学生 --</option></select></div>
+        <div class="form-group"><label>考试</label><select id="makeupExam"><option value="">-- 选择考试 --</option></select></div>
+      </div>
+      <div id="makeupSubjectFields"></div>
+      <div id="makeupResult" class="mt-16"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline modal-close" data-close="modalMakeup">取消</button>
+      <button class="btn btn-primary" id="btnSaveMakeup">保存补考成绩</button>
+    </div>
+  </div>
+</div>
+
+<!-- Error Modal -->
+<div class="modal-overlay" style="display:none;" id="modalError">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h3 id="errorModalTitle">添加错题</h3>
+      <button class="modal-close" data-close="modalError">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label>学生</label><select name="student_id" id="errorFormStudent"><option value="">-- 选择学生 --</option></select></div>
+        <div class="form-group"><label>考试</label><select name="exam_id" id="errorFormExam"><option value="">-- 选择考试 --</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>科目</label><select name="subject" id="errorFormSubject"><option value="">-- 选择科目 --</option></select></div>
+        <div class="form-group"><label>错误类型</label><select name="error_type" id="errorFormType">
+          <option value="">-- 选择类型 --</option>
+          <option value="概念不清">概念不清</option>
+          <option value="计算错误">计算错误</option>
+          <option value="审题失误">审题失误</option>
+          <option value="知识遗忘">知识遗忘</option>
+          <option value="方法不当">方法不当</option>
+          <option value="粗心大意">粗心大意</option>
+        </select></div>
+      </div>
+      <div class="form-group"><label>题目内容</label><textarea name="question" rows="2" placeholder="输入题目内容"></textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label>错误答案</label><input type="text" name="wrong_answer" placeholder="学生填写的错误答案"></div>
+        <div class="form-group"><label>正确答案</label><input type="text" name="correct_answer" placeholder="正确答案"></div>
+      </div>
+      <div class="form-group"><label>知识点</label><input type="text" name="knowledge_point" placeholder="输入相关知识点"></div>
+      <input type="hidden" name="id">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline modal-close" data-close="modalError">取消</button>
+      <button class="btn btn-primary" id="btnSaveError">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- User Modal -->
+<div class="modal-overlay" style="display:none;" id="modalUser">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>添加用户</h3>
+      <button class="modal-close" data-close="modalUser">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label>用户名</label><input type="text" id="newUsername" placeholder="输入用户名"></div>
+      <div class="form-group"><label>姓名</label><input type="text" id="newUserDisplayName" placeholder="输入姓名"></div>
+      <div class="form-row">
+        <div class="form-group"><label>角色</label><select id="newUserRole"><option value="admin">管理员</option><option value="teacher">教师</option><option value="student">学生</option><option value="parent">家长</option></select></div>
+        <div class="form-group"><label>电话</label><input type="text" id="newUserPhone" placeholder="输入电话号码"></div>
+      </div>
+      <div class="form-group"><label>密码</label><input type="password" id="newUserPassword" placeholder="输入密码"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline modal-close" data-close="modalUser">取消</button>
+      <button class="btn btn-primary" id="btnSaveUser">保存</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/common.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var pageTitles = {
+    'dashboard-section': '首页仪表盘',
+    'students-section': '学生管理',
+    'classes-section': '班级管理',
+    'subjects-section': '科目管理',
+    'exams-section': '考试管理',
+    'grades-section': '成绩管理',
+    'stats-section': '统计分析',
+    'errors-section': '错题管理',
+    'ability-section': '能力图谱',
+    'report-section': '学情报告',
+    'suggest-section': '学习建议',
+    'users-section': '用户管理',
+    'logs-section': '操作日志',
+    'password-section': '修改密码'
+  };
+
+  if (!Common.initAuth()) return;
+
+  API.authCheck().then(function (r) {
+    if (r && r.success && r.data) {
+      $('#sidebarUser').textContent = r.data.username || 'Admin';
+      $('#sidebarAvatar').textContent = (r.data.username || 'A').charAt(0).toUpperCase();
+    }
+  });
+
+  /* ====== NAVIGATION ====== */
+  $$('.sidebar-nav a.nv').forEach(function (a) {
+    a.addEventListener('click', function (e) {
+      e.preventDefault();
+      var sec = this.dataset.section;
+      if (!sec) return;
+      navigateTo(sec);
+      $('#pageTitle').textContent = pageTitles[sec] || '';
+    });
+  });
+  $$('.sidebar-nav a.nv').forEach(function (a) {
+    a.classList.remove('active');
+  });
+  var initialNav = $('.sidebar-nav a.nv[data-section="dashboard-section"]');
+  if (initialNav) initialNav.classList.add('active');
+
+  /* ====== THEME ====== */
+  initTheme();
+
+  /* ====== MODAL CLOSE BUTTONS ====== */
+  document.addEventListener('click', function (e) {
+    if (e.target.classList.contains('modal-close')) {
+      var id = e.target.dataset.close;
+      if (id) Util.closeModal(id);
+    }
+  });
+
+  /* ====== CHARTS ====== */
+  var chartInstances = {};
+  function drawChart(canvasId, type, labels, values, label, extraOptions) {
+    var ctx = document.getElementById(canvasId);
+    if (!ctx) return;
+    if (chartInstances[canvasId]) { chartInstances[canvasId].destroy(); chartInstances[canvasId] = null; }
+    if (!labels || !labels.length) { labels = ['暂无数据']; values = [1]; }
+    var colors = ['#4f46e5','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899','#f97316'];
+    var opts = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true } } }
+    };
+    if (type === 'radar') {
+      opts.scales = { r: { beginAtZero: true, max: 100, ticks: { stepSize: 20, backdropColor: 'transparent' }, pointLabels: { font: { size: 12 } } } };
+      opts.plugins.legend.display = false;
+    }
+    if (extraOptions) {
+      Object.keys(extraOptions).forEach(function (k) {
+        if (k === 'plugins') {
+          Object.keys(extraOptions.plugins).forEach(function (pk) {
+            if (!opts.plugins) opts.plugins = {};
+            if (extraOptions.plugins[pk] === null) delete opts.plugins[pk];
+            else opts.plugins[pk] = extraOptions.plugins[pk];
+          });
+        } else if (k === 'scales') {
+          opts.scales = extraOptions.scales;
+        } else {
+          opts[k] = extraOptions[k];
+        }
+      });
+    }
+    chartInstances[canvasId] = new Chart(ctx, {
+      type: type,
+      data: {
+        labels: labels,
+        datasets: [{
+          label: label,
+          data: values,
+          backgroundColor: type === 'pie' || type === 'doughnut' ? colors.slice(0, labels.length) : colors.slice(0, 1),
+          borderColor: type === 'line' ? colors[0] : undefined,
+          borderWidth: 1,
+          tension: 0.3
+        }]
+      },
+      options: opts
+    });
+  }
+
+  /* ====== COMMON HELPERS ====== */
+  function populateSelect(sel, list, idKey, nameKey, emptyText) {
+    if (!sel) return;
+    sel.innerHTML = '<option value="">' + (emptyText || '-- 请选择 --') + '</option>' +
+      list.map(function (item) {
+        return '<option value="' + item[idKey || 'id'] + '">' + Util.escapeHtml(item[nameKey || 'name']) + '</option>';
+      }).join('');
+  }
+
+  var _allStudents = [], _allExams = [], _allSubjects = [], _allClasses = [];
+
+  function loadAllStudents(cb) {
+    API.students.list({ size: 1000 }).then(function (r) {
+      _allStudents = [];
+      if (r && r.success) {
+        var d = r.data; _allStudents = d.list || d.records || d.data || (Array.isArray(d) ? d : []);
+      }
+      if (cb) cb(_allStudents);
+    });
+  }
+  function loadAllExams(cb, status) {
+    API.exams.list(status || '').then(function (r) {
+      _allExams = [];
+      if (r && r.success) {
+        var d = r.data; _allExams = Array.isArray(d) ? d : (d.list || d.records || d.data || []);
+      }
+      if (cb) cb(_allExams);
+    });
+  }
+  function loadAllSubjects(cb) {
+    API.subjects.list().then(function (r) {
+      _allSubjects = [];
+      if (r && r.success) {
+        var d = r.data; _allSubjects = Array.isArray(d) ? d : (d.list || d.records || d.data || []);
+      }
+      if (cb) cb(_allSubjects);
+    });
+  }
+  function loadAllClasses(cb) {
+    API.classes.list().then(function (r) {
+      _allClasses = [];
+      if (r && r.success) {
+        var d = r.data; _allClasses = Array.isArray(d) ? d : (d.list || d.records || d.data || []);
+      }
+      if (cb) cb(_allClasses);
+    });
+  }
+
+  /* ====== DASHBOARD ====== */
+  function loadDashboard() {
+    var pStudents = API.students.list({ size: 1 }).then(function (r) { return (r && r.data && r.data.total) || 0; }).catch(function () { return 0; });
+    var pClasses = API.classes.list().then(function (r) { return (r && r.data) ? (Array.isArray(r.data) ? r.data.length : (r.data.total || 0)) : 0; }).catch(function () { return 0; });
+    var pExams = API.exams.list('').then(function (r) { return (r && r.data) ? (Array.isArray(r.data) ? r.data.length : (r.data.total || 0)) : 0; }).catch(function () { return 0; });
+    var pSubjects = API.subjects.list().then(function (r) { return (r && r.data) ? (Array.isArray(r.data) ? r.data.length : (r.data.total || 0)) : 0; }).catch(function () { return 0; });
+    var pWarnings = API.stats.warnings().then(function (r) { return (r && r.data) ? (Array.isArray(r.data) ? r.data.length : (r.data.total || 0)) : 0; }).catch(function () { return 0; });
+    Promise.all([pStudents, pClasses, pExams, pSubjects, pWarnings]).then(function (v) {
+      $('#statStudents').textContent = v[0];
+      $('#statClasses').textContent = v[1];
+      $('#statExams').textContent = v[2];
+      $('#statSubjects').textContent = v[3];
+      $('#statWarnings').textContent = v[4];
+    });
+
+    API.stats.enrollment().then(function (r) {
+      var data = r && r.data ? (Array.isArray(r.data) ? r.data : []) : [];
+      var labels = data.map(function (d) { return d.name || d.class_name || ''; });
+      var values = data.map(function (d) { return d.count || d.student_count || 0; });
+      drawChart('chartEnroll', 'bar', labels, values, '班级人数');
+    }).catch(function () {});
+
+    API.exams.list('').then(function (r) {
+      var list = r && r.data ? (Array.isArray(r.data) ? r.data : (r.data.list || r.data.records || [])) : [];
+      var recent = list.slice(0, 10);
+      var container = $('#recentExamsList');
+      if (!recent.length) {
+        container.innerHTML = '<div class="empty"><p>暂无考试</p></div>';
+      } else {
+        container.innerHTML = '<table><thead><tr><th>考试名称</th><th>状态</th><th>满分</th></tr></thead><tbody>' +
+          recent.map(function (e) {
+            return '<tr><td>' + Util.escapeHtml(e.name) + '</td><td>' + Util.statusBadge(e.status) + '</td><td>' + (e.full_score || '-') + '</td></tr>';
+          }).join('') + '</tbody></table>';
+      }
+    }).catch(function () {});
+  }
+
+  /* ====== STUDENTS ====== */
+  var _studentPage = 1;
+  function loadStudents(page) {
+    page = page || 1; _studentPage = page;
+    var search = $('#studentSearch').value;
+    var cls = $('#studentClassFilter').value;
+    API.students.list({ search: search, class: cls, page: page, size: 15 }).then(function (r) {
+      if (!r || !r.success) { Util.showToast(r && r.message || '加载失败', 'error'); return; }
+      var data = r.data;
+      var list = data.list || data.records || data.data || [];
+      var total = data.total || list.length;
+      var tbody = $('#studentTableBody');
+      if (!list.length) {
+        tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><div class="ei">&#128100;</div><p>暂无数据</p></div></td></tr>';
+      } else {
+        tbody.innerHTML = list.map(function (s) {
+          return '<tr><td>' + Util.escapeHtml(s.student_no) + '</td>' +
+            '<td>' + Util.escapeHtml(s.name) + '</td>' +
+            '<td>' + Util.escapeHtml(s.gender) + '</td>' +
+            '<td>' + Util.escapeHtml(s.class_name || '') + '</td>' +
+            '<td>' + Util.escapeHtml(s.enrollment_year || '') + '</td>' +
+            '<td><button class="btn btn-outline btn-sm btn-edit-student" data-id="' + s.id + '">编辑</button> ' +
+            '<button class="btn btn-danger btn-sm btn-del-student" data-id="' + s.id + '">删除</button></td></tr>';
+        }).join('');
+      }
+      Util.renderPagination('studentPagination', page, total, 15, loadStudents);
+    }).catch(function () { Util.showToast('加载失败', 'error'); });
+  }
+
+  function openStudentModal(id) {
+    loadClassOptions();
+    var m = $('#modalStudent');
+    Util.setFormValues('#modalStudent', { id: '', student_no: '', name: '', gender: '男', class_id: '', enrollment_year: '' });
+    if (id) {
+      $('#studentModalTitle').textContent = '编辑学生';
+      m.querySelector('input[name="id"]').value = id;
+      var s = _allStudents.find(function (x) { return x.id == id; });
+      if (s) { Util.setFormValues('#modalStudent', s); Util.openModal('modalStudent'); }
+      else { loadAllStudents(function () { var s2 = _allStudents.find(function (x) { return x.id == id; }); if (s2) { Util.setFormValues('#modalStudent', s2); Util.openModal('modalStudent'); } else Util.showToast('未找到学生', 'error'); }); }
+    } else {
+      $('#studentModalTitle').textContent = '添加学生';
+      Util.openModal('modalStudent');
+    }
+  }
+
+  function saveStudent() {
+    var data = Util.getFormValues('#modalStudent input, #modalStudent select');
+    var id = data.id; delete data.id;
+    var promise = id ? API.students.update(id, data) : API.students.add(data);
+    promise.then(function (r) {
+      if (r && r.success) { Util.showToast('保存成功', 'success'); Util.closeModal('modalStudent'); loadStudents(_studentPage); loadAllStudents(); }
+      else Util.showToast((r && r.message) || '保存失败', 'error');
+    });
+  }
+
+  function deleteStudent(id) {
+    Util.confirm('确定删除该学生吗？', function () {
+      API.students.del(id).then(function (r) {
+        if (r && r.success) { Util.showToast('删除成功', 'success'); loadStudents(_studentPage); loadAllStudents(); }
+        else Util.showToast((r && r.message) || '删除失败', 'error');
+      });
+    });
+  }
+
+  function loadClassOptions() {
+    loadAllClasses(function (list) {
+      populateSelect($('#studentFormClass'), list, 'id', 'name', '-- 选择班级 --');
+      populateSelect($('#studentClassFilter'), list, 'id', 'name', '全部班级');
+    });
+  }
+
+  /* ====== CLASSES ====== */
+  function loadClasses() {
+    API.classes.list().then(function (r) {
+      if (!r || !r.success) { Util.showToast(r && r.message || '加载失败', 'error'); return; }
+      var list = r.data; if (!Array.isArray(list)) list = list.list || list.records || list.data || [];
+      _allClasses = list;
+      var gradeMap = { '1': '高一', '2': '高二', '3': '高三' };
+      $('#classTableBody').innerHTML = list.length ? list.map(function (c) {
+        return '<tr><td>' + c.id + '</td><td>' + Util.escapeHtml(c.name) + '</td><td>' + (gradeMap[c.grade] || c.grade || '') + '</td><td>' + Util.escapeHtml(c.major || '') + '</td>' +
+          '<td><button class="btn btn-outline btn-sm btn-edit-class" data-id="' + c.id + '">编辑</button> ' +
+          '<button class="btn btn-danger btn-sm btn-del-class" data-id="' + c.id + '">删除</button></td></tr>';
+      }).join('') : '<tr><td colspan="5"><div class="empty"><div class="ei">&#127979;</div><p>暂无数据</p></div></td></tr>';
+    });
+  }
+
+  function openClassModal(id) {
+    var m = $('#modalClass');
+    m.querySelector('input[name="id"]').value = '';
+    m.querySelector('input[name="name"]').value = '';
+    m.querySelector('select[name="grade"]').value = '1';
+    m.querySelector('input[name="major"]').value = '';
+    if (id) {
+      $('#classModalTitle').textContent = '编辑班级';
+      m.querySelector('input[name="id"]').value = id;
+      var c = _allClasses.find(function (x) { return x.id == id; });
+      if (c) { Util.setFormValues('#modalClass', c); Util.openModal('modalClass'); }
+      else { API.classes.list().then(function (r2) { var l2 = r2 && r2.data ? (Array.isArray(r2.data) ? r2.data : (r2.data.list || [])) : []; var c2 = l2.find(function (x) { return x.id == id; }); if (c2) { Util.setFormValues('#modalClass', c2); Util.openModal('modalClass'); } }); }
+    } else {
+      $('#classModalTitle').textContent = '添加班级';
+      Util.openModal('modalClass');
+    }
+  }
+
+  function saveClass() {
+    var data = Util.getFormValues('#modalClass input, #modalClass select');
+    var id = data.id; delete data.id;
+    var promise = id ? API.classes.update(id, data) : API.classes.add(data);
+    promise.then(function (r) {
+      if (r && r.success) { Util.showToast('保存成功', 'success'); Util.closeModal('modalClass'); loadClasses(); loadAllClasses(); }
+      else Util.showToast((r && r.message) || '保存失败', 'error');
+    });
+  }
+
+  function deleteClass(id) {
+    Util.confirm('确定删除该班级吗？', function () {
+      API.classes.del(id).then(function (r) {
+        if (r && r.success) { Util.showToast('删除成功', 'success'); loadClasses(); loadAllClasses(); }
+        else Util.showToast((r && r.message) || '删除失败', 'error');
+      });
+    });
+  }
+
+  /* ====== SUBJECTS ====== */
+  function loadSubjects() {
+    API.subjects.list().then(function (r) {
+      if (!r || !r.success) { Util.showToast(r && r.message || '加载失败', 'error'); return; }
+      var list = r.data; if (!Array.isArray(list)) list = list.list || list.records || list.data || [];
+      _allSubjects = list;
+      $('#subjectTableBody').innerHTML = list.length ? list.map(function (s) {
+        return '<tr><td>' + s.id + '</td><td>' + Util.escapeHtml(s.name) + '</td>' +
+          '<td><button class="btn btn-danger btn-sm btn-del-subject" data-id="' + s.id + '">删除</button></td></tr>';
+      }).join('') : '<tr><td colspan="3"><div class="empty"><div class="ei">&#128218;</div><p>暂无数据</p></div></td></tr>';
+    });
+  }
+
+  function saveSubject() {
+    var name = $('#subjectNameInput').value.trim();
+    if (!name) { Util.showToast('请输入科目名称', 'error'); return; }
+    API.subjects.add({ name: name }).then(function (r) {
+      if (r && r.success) { Util.showToast('添加成功', 'success'); Util.closeModal('modalSubject'); loadSubjects(); loadAllSubjects(); }
+      else Util.showToast((r && r.message) || '添加失败', 'error');
+    });
+  }
+
+  function deleteSubject(id) {
+    Util.confirm('确定删除该科目吗？', function () {
+      API.del('/subjects/' + id).then(function (r) {
+        if (r && r.success) { Util.showToast('删除成功', 'success'); loadSubjects(); loadAllSubjects(); }
+        else Util.showToast((r && r.message) || '删除失败', 'error');
+      });
+    });
+  }
+
+  /* ====== EXAMS ====== */
+  function loadExams() {
+    var status = $('#examStatusFilter').value;
+    API.exams.list(status).then(function (r) {
+      if (!r || !r.success) { Util.showToast(r && r.message || '加载失败', 'error'); return; }
+      var list = r.data; if (!Array.isArray(list)) list = list.list || list.records || list.data || [];
+      _allExams = list;
+      $('#examTableBody').innerHTML = list.length ? list.map(function (e) {
+        var subNames = (e.subjects || []).map(function (s) { return s.name || s.subject_name || s; }).join(', ');
+        var actions = '';
+        if (e.status === 'draft') {
+          actions += '<button class="btn btn-warning btn-sm btn-publish-exam" data-id="' + e.id + '">发布</button> ';
+          actions += '<button class="btn btn-outline btn-sm btn-edit-exam" data-id="' + e.id + '">编辑</button> ';
+        } else if (e.status === 'published') {
+          actions += '<button class="btn btn-outline btn-sm btn-retract-exam" data-id="' + e.id + '">撤回</button> ';
+          actions += '<button class="btn btn-danger btn-sm btn-lock-exam" data-id="' + e.id + '">锁定</button> ';
+        }
+        actions += '<button class="btn btn-danger btn-sm btn-del-exam" data-id="' + e.id + '">删除</button>';
+        return '<tr><td>' + e.id + '</td><td>' + Util.escapeHtml(e.name) + '</td><td>' + Util.statusBadge(e.status) + '</td>' +
+          '<td>' + (e.full_score || '-') + '</td><td>' + (e.pass_score || '-') + '</td><td>' + Util.escapeHtml(subNames) + '</td><td>' + actions + '</td></tr>';
+      }).join('') : '<tr><td colspan="7"><div class="empty"><div class="ei">&#128221;</div><p>暂无数据</p></div></td></tr>';
+    });
+  }
+
+  function openExamModal(id) {
+    var m = $('#modalExam');
+    m.querySelector('input[name="id"]').value = '';
+    m.querySelector('input[name="name"]').value = '';
+    m.querySelector('input[name="full_score"]').value = '750';
+    m.querySelector('input[name="pass_score"]').value = '450';
+    m.querySelector('select[name="status"]').value = 'draft';
+    if (id) {
+      $('#examModalTitle').textContent = '编辑考试';
+      m.querySelector('input[name="id"]').value = id;
+      var e = _allExams.find(function (x) { return x.id == id; });
+      if (e) { Util.setFormValues('#modalExam', e); loadExamSubjectChecks(e.subjects || []); Util.openModal('modalExam'); }
+      else { API.exams.list('').then(function (r2) { var l2 = r2.data; if (!Array.isArray(l2)) l2 = l2.list || []; var e2 = l2.find(function (x) { return x.id == id; }); if (e2) { Util.setFormValues('#modalExam', e2); loadExamSubjectChecks(e2.subjects || []); Util.openModal('modalExam'); } }); }
+    } else {
+      $('#examModalTitle').textContent = '创建考试';
+      loadExamSubjectChecks([]);
+      Util.openModal('modalExam');
+    }
+  }
+
+  function loadExamSubjectChecks(existing) {
+    loadAllSubjects(function (list) {
+      var em = {}; (existing || []).forEach(function (s) { var sid = s.subject_id || s.id; em[sid] = s.weight || 1; });
+      $('#examSubjectChecks').innerHTML = list.map(function (s) {
+        return '<div class="subject-check">' +
+          '<label style="display:flex;align-items:center;gap:6px;font-size:14px;color:var(--text);cursor:pointer;">' +
+          '<input type="checkbox" name="exam_subject_' + s.id + '" value="' + s.id + '" ' + (em[s.id] != null ? 'checked' : '') + '>' +
+          Util.escapeHtml(s.name) + '</label>' +
+          '<input type="number" name="exam_weight_' + s.id + '" value="' + (em[s.id] || 1) + '" min="0" step="0.1" style="width:80px;" placeholder="权重">' +
+          '</div>';
+      }).join('');
+    });
+  }
+
+  function saveExam() {
+    var data = Util.getFormValues('#modalExam input[name], #modalExam select[name]');
+    var id = data.id; delete data.id;
+    var cbs = $$('#examSubjectChecks input[type="checkbox"]:checked');
+    if (!cbs.length) { Util.showToast('请至少选择一个科目', 'error'); return; }
+    var subjects = []; cbs.forEach(function (cb) {
+      var sid = parseInt(cb.value);
+      var wEl = document.querySelector('#examSubjectChecks input[name="exam_weight_' + sid + '"]');
+      subjects.push({ subject_id: sid, weight: parseFloat(wEl ? wEl.value : 1) || 1 });
+    });
+    data.subjects = subjects;
+    var promise = id ? API.exams.update(id, data) : API.exams.add(data);
+    promise.then(function (r) {
+      if (r && r.success) { Util.showToast('保存成功', 'success'); Util.closeModal('modalExam'); loadExams(); loadAllExams(); }
+      else Util.showToast((r && r.message) || '保存失败', 'error');
+    });
+  }
+
+  function publishExam(id) {
+    Util.confirm('确定发布该考试吗？', function () {
+      API.exams.publish(id).then(function (r) {
+        if (r && r.success) { Util.showToast('发布成功', 'success'); loadExams(); loadAllExams(); }
+        else Util.showToast((r && r.message) || '发布失败', 'error');
+      });
+    });
+  }
+
+  function retractExam(id) {
+    Util.confirm('确定撤回该考试吗？', function () {
+      API.exams.retract(id).then(function (r) {
+        if (r && r.success) { Util.showToast('撤回成功', 'success'); loadExams(); loadAllExams(); }
+        else Util.showToast((r && r.message) || '撤回失败', 'error');
+      });
+    });
+  }
+
+  function lockExam(id) {
+    Util.confirm('确定锁定该考试吗？锁定后成绩不可修改。', function () {
+      API.grades.lock(id).then(function (r) {
+        if (r && r.success) { Util.showToast('锁定成功', 'success'); loadExams(); loadAllExams(); }
+        else Util.showToast((r && r.message) || '锁定失败', 'error');
+      });
+    });
+  }
+
+  function deleteExam(id) {
+    Util.confirm('确定删除该考试吗？', function () {
+      API.exams.del(id).then(function (r) {
+        if (r && r.success) { Util.showToast('删除成功', 'success'); loadExams(); loadAllExams(); }
+        else Util.showToast((r && r.message) || '删除失败', 'error');
+      });
+    });
+  }
+
+  /* ====== GRADES ====== */
+  var _currentGradeExam = null;
+  function loadGradeExams() {
+    loadAllExams(function (list) {
+      var sel = $('#gradeExamSelect');
+      sel.innerHTML = '<option value="">-- 选择考试 --</option>' + list.map(function (e) {
+        return '<option value="' + e.id + '" data-status="' + (e.status || '') + '">' + Util.escapeHtml(e.name) + ' (' + (e.status || '') + ')</option>';
+      }).join('');
+    });
+  }
+
+  function loadGradeTable() {
+    var examId = $('#gradeExamSelect').value;
+    if (!examId) return;
+    _currentGradeExam = examId;
+    var opt = $('#gradeExamSelect').selectedOptions[0];
+    var examStatus = opt ? opt.dataset.status : '';
+    API.grades.list(examId).then(function (r) {
+      var data = r && r.data ? r.data : {};
+      var students = data.students || data.list || [];
+      var subjects = data.subjects || [];
+      var grades = data.grades || {};
+      var status = data.status || examStatus;
+      $('#csvExamId').value = examId;
+      var si = $('#gradeStatusInfo');
+      var isLocked = status === 'locked';
+      if (isLocked) { si.style.display = ''; si.innerHTML = '<div class="alert alert-error">该考试已锁定，成绩不可修改</div>'; }
+      else if (status === 'published') { si.style.display = ''; si.innerHTML = '<div class="alert alert-info">该考试已发布，可以录入成绩</div>'; }
+      else { si.style.display = 'none'; }
+      $('#btnBatchSave').style.display = isLocked ? 'none' : '';
+      $('#btnLockGrades').style.display = (status === 'published' && students.length) ? '' : 'none';
+      $('#btnMakeup').style.display = isLocked ? '' : 'none';
+      var headHtml = '<tr><th>学号</th><th>姓名</th><th>班级</th>';
+      subjects.forEach(function (s) { headHtml += '<th>' + Util.escapeHtml(s.name || s.subject_name) + (s.full_score ? '(' + s.full_score + ')' : '') + '</th>'; });
+      headHtml += '<th>总分</th></tr>';
+      $('#gradeTableHead').innerHTML = headHtml;
+      if (!students.length) {
+        $('#gradeTableBody').innerHTML = '<tr><td colspan="' + (subjects.length + 4) + '"><div class="empty"><div class="ei">&#128218;</div><p>暂无成绩数据</p></div></td></tr>';
+        return;
+      }
+      var bodyHtml = '';
+      students.forEach(function (st) {
+        bodyHtml += '<tr><td>' + Util.escapeHtml(st.student_no) + '</td><td>' + Util.escapeHtml(st.name) + '</td><td>' + Util.escapeHtml(st.class_name || '') + '</td>';
+        var total = 0, allScored = true;
+        subjects.forEach(function (sub) {
+          var sid = sub.id || sub.subject_id;
+          var g = (grades[st.id] && grades[st.id][sid]);
+          if (g === '' || g === null || g === undefined) allScored = false; else total += parseFloat(g) || 0;
+          var cls = Util.scoreColor(g != null ? parseFloat(g) : NaN);
+          bodyHtml += '<td><input type="number" class="' + cls + '" data-student="' + st.id + '" data-subject="' + sid + '" value="' + (g != null && g !== '' ? g : '') + '" min="0" max="300" step="0.5"' + (isLocked ? ' disabled' : '') + '></td>';
+        });
+        bodyHtml += '<td class="text-center ' + Util.scoreColor(allScored ? total : NaN) + '">' + (allScored ? '<b>' + total.toFixed(1) + '</b>' : '-') + '</td></tr>';
+      });
+      $('#gradeTableBody').innerHTML = bodyHtml;
+      if (!isLocked) {
+        $$('#gradeTableBody input[type="number"]').forEach(function (inp) {
+          inp.addEventListener('change', function () {
+            var row = inp.closest('tr');
+            var cells = row.querySelectorAll('input[type="number"]');
+            var total = 0, allScored = true;
+            cells.forEach(function (c) { var v = parseFloat(c.value); if (isNaN(v) || c.value === '') allScored = false; else total += v; });
+            var tc = row.querySelector('td.text-center');
+            if (allScored) { tc.innerHTML = '<b>' + total.toFixed(1) + '</b>'; tc.className = 'text-center ' + Util.scoreColor(total); }
+            else { tc.textContent = '-'; tc.className = 'text-center'; }
+          });
+        });
+      }
+    }).catch(function () { Util.showToast('加载成绩失败', 'error'); });
+  }
+
+  function batchSaveGrades() {
+    if (!_currentGradeExam) { Util.showToast('请先选择考试', 'error'); return; }
+    var inputs = $$('#gradeTableBody input[type="number"]');
+    var gradesData = [];
+    inputs.forEach(function (inp) {
+      if (inp.value !== '' && inp.value != null && !inp.disabled) {
+        gradesData.push({ student_id: parseInt(inp.dataset.student), exam_id: parseInt(_currentGradeExam), subject_id: parseInt(inp.dataset.subject), score: parseFloat(inp.value) });
+      }
+    });
+    if (!gradesData.length) { Util.showToast('没有可保存的成绩', 'warning'); return; }
+    API.grades.set({ grades: gradesData, exam_id: parseInt(_currentGradeExam) }).then(function (r) {
+      if (r && r.success) { Util.showToast('成绩保存成功', 'success'); loadGradeTable(); }
+      else Util.showToast((r && r.message) || '保存失败', 'error');
+    });
+  }
+
+  function openCsvImportModal() {
+    if (!_currentGradeExam) { Util.showToast('请先选择考试', 'error'); return; }
+    $('#csvExamId').value = _currentGradeExam;
+    $('#csvContent').value = '';
+    $('#csvResult').innerHTML = '';
+    Util.openModal('modalCsvImport');
+  }
+
+  function importCsv() {
+    var examId = $('#csvExamId').value;
+    var csv = $('#csvContent').value;
+    if (!csv.trim()) { Util.showToast('请输入CSV数据', 'error'); return; }
+    API.grades.import(csv, examId).then(function (r) {
+      if (r && r.success) { Util.showToast((r.message || '导入成功'), 'success'); setTimeout(function () { Util.closeModal('modalCsvImport'); loadGradeTable(); }, 1000); }
+      else Util.showToast((r && r.message) || '导入失败', 'error');
+    }).catch(function () { Util.showToast('导入失败', 'error'); });
+  }
+
+  function exportCsv(examId) {
+    API.grades.export(examId).then(function (r) {
+      var csv = '';
+      if (r && r.data) csv = r.data;
+      else if (typeof r === 'string') csv = r;
+      if (csv) { var blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' }); var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'grades_export_' + examId + '.csv'; a.click(); Util.showToast('导出成功', 'info'); }
+      else Util.showToast('无导出数据', 'warning');
+    }).catch(function () { Util.showToast('导出失败', 'error'); });
+  }
+
+  function openMakeupModal() {
+    loadAllStudents(function (list) { populateSelect($('#makeupStudent'), list, 'id', 'student_no', '-- 选择学生 --'); });
+    loadAllExams(function (list) { populateSelect($('#makeupExam'), list, 'id', 'name', '-- 选择考试 --'); });
+    $('#makeupSubjectFields').innerHTML = '';
+    Util.openModal('modalMakeup');
+  }
+
+  function saveMakeup() {
+    var sid = $('#makeupStudent').value, eid = $('#makeupExam').value;
+    if (!sid || !eid) { Util.showToast('请选择学生和考试', 'error'); return; }
+    var scores = [];
+    $$('#makeupSubjectFields input').forEach(function (inp) { if (inp.value !== '') scores.push({ subject_id: parseInt(inp.dataset.subject), score: parseFloat(inp.value) }); });
+    if (!scores.length) { Util.showToast('请输入至少一个科目成绩', 'error'); return; }
+    API.grades.makeup(sid, eid, scores).then(function (r) {
+      if (r && r.success) { Util.showToast((r.message || '补考录入成功'), 'success'); setTimeout(function () { Util.closeModal('modalMakeup'); loadGradeTable(); }, 1000); }
+      else Util.showToast((r && r.message) || '补考录入失败', 'error');
+    });
+  }
+
+  /* ====== STATISTICS ====== */
+  function loadStatsExams() {
+    loadAllExams(function (list) { populateSelect($('#statsExamSelect'), list, 'id', 'name', '-- 选择考试 --'); });
+    loadAllSubjects(function (list) { populateSelect($('#statsSubjectFilter'), list, 'id', 'name', '全部科目'); });
+  }
+
+  function loadRank() {
+    var examId = $('#statsExamSelect').value; if (!examId) return;
+    var type = $('#rankType').value;
+    var subject = type === 'subject' ? $('#rankSubject').value : null;
+    API.stats.rank(examId, type, subject).then(function (r) {
+      var list = r && r.data ? (Array.isArray(r.data) ? r.data : (r.data.list || r.data.records || [])) : [];
+      $('#rankTableBody').innerHTML = list.length ? list.map(function (item, i) {
+        return '<tr><td class="text-center">' + (i + 1) + '</td><td>' + Util.escapeHtml(item.student_no) + '</td><td>' + Util.escapeHtml(item.name) + '</td><td>' + Util.escapeHtml(item.class_name || '') + '</td>' +
+          '<td>' + (item.total_score != null ? item.total_score : (item.score || '-')) + '</td><td>' + (item.average != null ? parseFloat(item.average).toFixed(1) : '-') + '</td></tr>';
+      }).join('') : '<tr><td colspan="6"><div class="empty"><p>暂无数据</p></div></td></tr>';
+    });
+  }
+
+  function loadClassCompare() {
+    var examId = $('#statsExamSelect').value; if (!examId) return;
+    API.stats.classCompare(examId).then(function (r) {
+      var data = r && r.data ? r.data : [];
+      var classes = Array.isArray(data) ? data : (data.classes || []);
+      var subjects = data.subjects || [];
+      if (!classes.length) { $('#classCompareHead').innerHTML = '<tr><th>班级</th></tr>'; $('#classCompareBody').innerHTML = '<tr><td><div class="empty"><p>暂无数据</p></div></td></tr>'; return; }
+      var headHtml = '<tr><th>班级</th><th>人数</th><th>平均分</th><th>最高分</th><th>最低分</th><th>及格率</th>';
+      subjects.forEach(function (s) { headHtml += '<th>' + Util.escapeHtml(s.name || s.subject_name || '') + '(均)</th>'; });
+      headHtml += '</tr>';
+      $('#classCompareHead').innerHTML = headHtml;
+      $('#classCompareBody').innerHTML = classes.map(function (c) {
+        var html = '<tr><td>' + Util.escapeHtml(c.name || c.class_name) + '</td><td>' + (c.count || c.student_count || '-') + '</td>' +
+          '<td>' + (c.average != null ? parseFloat(c.average).toFixed(1) : '-') + '</td><td>' + (c.max || '-') + '</td><td>' + (c.min || '-') + '</td>' +
+          '<td>' + (c.pass_rate != null ? (parseFloat(c.pass_rate) * 100).toFixed(1) + '%' : '-') + '</td>';
+        subjects.forEach(function (s) { var sid = s.id || s.subject_id; var sa = (c.subjects && c.subjects[sid]) ? c.subjects[sid].average : '-'; html += '<td>' + (sa !== '-' ? parseFloat(sa).toFixed(1) : '-') + '</td>'; });
+        html += '</tr>'; return html;
+      }).join('');
+    });
+  }
+
+  function loadDistribution() {
+    var examId = $('#statsExamSelect').value; if (!examId) return;
+    var subject = $('#statsSubjectFilter').value || '';
+    API.stats.distribution(examId, subject).then(function (r) {
+      var data = r && r.data ? (Array.isArray(r.data) ? r.data : []) : [];
+      drawChart('chartDistribution', 'bar', data.map(function (d) { return d.range || d.label || ''; }), data.map(function (d) { return d.count || 0; }), '成绩分布');
+    });
+  }
+
+  function loadWarnings() {
+    API.stats.warnings().then(function (r) {
+      var list = r && r.data ? (Array.isArray(r.data) ? r.data : (r.data.list || r.data.records || [])) : [];
+      $('#warningsTableBody').innerHTML = list.length ? list.map(function (w) {
+        return '<tr><td>' + Util.escapeHtml(w.student_name || w.name || '') + '</td><td>' + Util.escapeHtml(w.class_name || '') + '</td>' +
+          '<td><span class="badge badge-warning">' + Util.escapeHtml(w.type || w.warning_type || '') + '</span></td>' +
+          '<td>' + Util.escapeHtml(w.subject_name || w.subject || '') + '</td>' +
+          '<td class="' + Util.scoreColor(w.score) + '">' + (w.score != null ? w.score : '-') + '</td>' +
+          '<td>' + Util.escapeHtml(w.detail || w.description || '') + '</td></tr>';
+      }).join('') : '<tr><td colspan="6"><div class="empty"><div class="ei">&#9989;</div><p>暂无预警</p></div></td></tr>';
+    });
+  }
+
+  /* ====== ERRORS (错题管理) ====== */
+  var _errorPage = 1;
+  function loadErrors(page) {
+    page = page || 1; _errorPage = page;
+    var sid = $('#errorStudentSelect').value, eid = $('#errorExamSelect').value;
+    var subject = $('#errorSubjectFilter').value;
+    API.extras.getErrors({ student_id: sid || undefined, exam_id: eid || undefined, subject: subject || undefined, page: page, size: 15 }).then(function (r) {
+      var data = r && r.data ? r.data : {};
+      var list = data.list || data.records || data.data || [];
+      var total = data.total || list.length;
+      $('#errorTableBody').innerHTML = list.length ? list.map(function (e) {
+        return '<tr><td>' + Util.escapeHtml(e.student_name || e.student_no || '') + '</td>' +
+          '<td>' + Util.escapeHtml(e.exam_name || '') + '</td><td>' + Util.escapeHtml(e.subject || '') + '</td>' +
+          '<td>' + Util.escapeHtml(e.question || '') + '</td><td>' + Util.escapeHtml(e.wrong_answer || '') + '</td>' +
+          '<td>' + Util.escapeHtml(e.correct_answer || '') + '</td>' +
+          '<td><span class="badge badge-danger">' + Util.escapeHtml(e.error_type || '') + '</span></td>' +
+          '<td>' + Util.escapeHtml(e.knowledge_point || '') + '</td>' +
+          '<td><button class="btn btn-danger btn-sm btn-del-error" data-id="' + e.id + '">删除</button></td></tr>';
+      }).join('') : '<tr><td colspan="9"><div class="empty"><div class="ei">&#10060;</div><p>暂无错题记录</p></div></td></tr>';
+      Util.renderPagination('errorPagination', page, total, 15, loadErrors);
+    }).catch(function () { Util.showToast('加载失败', 'error'); });
+  }
+
+  function loadErrorStats() {
+    var sid = $('#errorStudentSelect').value;
+    if (!sid) { $('#errorStatsCards').style.display = 'none'; return; }
+    API.extras.getErrorStats(sid).then(function (r) {
+      var data = r && r.data ? r.data : {};
+      var byType = data.by_type || {};
+      var bySubject = data.by_subject || {};
+      $('#errorStatsCards').style.display = '';
+      var typeHtml = Object.keys(byType).length ? Object.keys(byType).map(function (k) {
+        return '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;"><span>' + Util.escapeHtml(k) + '</span><span class="badge badge-danger">' + byType[k] + '</span></div>';
+      }).join('') : '<div class="empty"><p>暂无数据</p></div>';
+      var subHtml = Object.keys(bySubject).length ? Object.keys(bySubject).map(function (k) {
+        return '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;"><span>' + Util.escapeHtml(k) + '</span><span class="badge badge-info">' + bySubject[k] + '</span></div>';
+      }).join('') : '<div class="empty"><p>暂无数据</p></div>';
+      $('#errorByType').innerHTML = typeHtml;
+      $('#errorBySubject').innerHTML = subHtml;
+    }).catch(function () { $('#errorStatsCards').style.display = 'none'; });
+  }
+
+  function openErrorModal(id) {
+    loadAllStudents(function (list) { populateSelect($('#errorFormStudent'), list, 'id', 'student_no', '-- 选择学生 --'); });
+    loadAllExams(function (list) { populateSelect($('#errorFormExam'), list, 'id', 'name', '-- 选择考试 --'); });
+    loadAllSubjects(function (list) { populateSelect($('#errorFormSubject'), list, 'name', 'name', '-- 选择科目 --'); });
+    $('#errorModalTitle').textContent = '添加错题';
+    $('#errorFormType').value = '';
+    $$('#modalError input:not([type=hidden]), #modalError select, #modalError textarea').forEach(function (el) {
+      if (el.type !== 'hidden' && el.tagName !== 'BUTTON') el.value = '';
+    });
+    $('#modalError input[name="id"]').value = '';
+    if (id) { $('#errorModalTitle').textContent = '编辑错题'; $('#modalError input[name="id"]').value = id; }
+    Util.openModal('modalError');
+  }
+
+  function saveError() {
+    var data = Util.getFormValues('#modalError input, #modalError select, #modalError textarea');
+    var id = data.id; delete data.id;
+    if (!data.student_id || !data.exam_id || !data.subject || !data.error_type) { Util.showToast('请填写必要字段', 'error'); return; }
+    API.extras.setError(data).then(function (r) {
+      if (r && r.success) { Util.showToast((r.message || '保存成功'), 'success'); Util.closeModal('modalError'); loadErrors(_errorPage); loadErrorStats(); }
+      else Util.showToast((r && r.message) || '保存失败', 'error');
+    });
+  }
+
+  function deleteError(id) {
+    Util.confirm('确定删除该错题记录吗？', function () {
+      API.del('/errors/' + id).then(function (r) {
+        if (r && r.success) { Util.showToast('删除成功', 'success'); loadErrors(_errorPage); loadErrorStats(); }
+        else Util.showToast((r && r.message) || '删除失败', 'error');
+      });
+    });
+  }
+
+  /* ====== ABILITY (能力图谱) ====== */
+  function loadAbility() {
+    var sid = $('#abilityStudentSelect').value, eid = $('#abilityExamSelect').value;
+    if (!sid || !eid) { Util.showToast('请选择学生和考试', 'error'); return; }
+    Promise.all([API.stats.ability(sid, eid), API.stats.imbalance(sid)]).then(function (results) {
+      var ability = results[0], imbalance = results[1];
+      var ad = ability && ability.data ? ability.data : {};
+      var id = imbalance && imbalance.data ? (Array.isArray(imbalance.data) ? imbalance.data : []) : [];
+      var subjects = ad.subjects || ad.abilities || [];
+      $('#abilityContent').style.display = '';
+      $('#abilityEmpty').style.display = 'none';
+      if (subjects.length) {
+        var labels = subjects.map(function (s) { return s.name || s.subject_name || ''; });
+        var values = subjects.map(function (s) { return s.score != null ? parseFloat(s.score) : 0; });
+        drawChart('chartRadar', 'radar', labels, values, '能力值', { scales: { r: { beginAtZero: true, max: 100, ticks: { stepSize: 20 } } } });
+      }
+      if (id.length) {
+        drawChart('chartImbalance', 'bar', id.map(function (d) { return d.subject || d.name || ''; }), id.map(function (d) { return d.imbalance || d.score || 0; }), '偏科指数');
+      }
+      var detailsHtml = '';
+      if (subjects.length) {
+        detailsHtml += '<div class="table-wrap"><table><thead><tr><th>科目</th><th>得分</th><th>满分</th><th>标准化</th><th>等级</th></tr></thead><tbody>' +
+          subjects.map(function (s) {
+            var norm = s.normalized || s.score || 0;
+            var level = norm >= 90 ? 'A' : norm >= 80 ? 'B' : norm >= 70 ? 'C' : norm >= 60 ? 'D' : 'F';
+            return '<tr><td>' + Util.escapeHtml(s.name || s.subject_name || '') + '</td>' +
+              '<td>' + (s.raw_score != null ? s.raw_score : (s.score || '-')) + '</td>' +
+              '<td>' + (s.full_score || '-') + '</td>' +
+              '<td>' + (norm != null ? parseFloat(norm).toFixed(1) + '%' : '-') + '</td>' +
+              '<td><span class="badge ' + (level === 'A' ? 'badge-success' : level === 'B' ? 'badge-info' : level === 'C' ? 'badge-warning' : 'badge-danger') + '">' + level + '</span></td></tr>';
+          }).join('') + '</tbody></table></div>';
+      }
+      if (ad.overall_score != null) {
+        detailsHtml += '<div class="mt-16 info-row"><div>综合能力指数: <b>' + ad.overall_score + '</b></div>' +
+          '<div>偏科程度: <b>' + (ad.imbalance_level || ad.imbalance || '-') + '</b></div>' +
+          '<div>优势科目数: <b>' + (ad.strong_count || 0) + '</b></div>' +
+          '<div>薄弱科目数: <b>' + (ad.weak_count || 0) + '</b></div></div>';
+      }
+      $('#abilityDetails').innerHTML = detailsHtml;
+    }).catch(function () { Util.showToast('加载能力图谱失败', 'error'); });
+  }
+
+  /* ====== REPORT (学情报告) ====== */
+  function loadReport() {
+    var sid = $('#reportStudentSelect').value;
+    if (!sid) { Util.showToast('请选择学生', 'error'); return; }
+    var studentName = $('#reportStudentSelect').selectedOptions[0] ? $('#reportStudentSelect').selectedOptions[0].textContent : '';
+    Promise.all([API.report.get(sid), API.stats.trend(sid), API.suggest.get(sid)]).then(function (results) {
+      var report = results[0], trend = results[1], suggest = results[2];
+      var rd = report && report.data ? report.data : {};
+      var td = trend && trend.data ? (Array.isArray(trend.data) ? trend.data : (trend.data.list || [])) : [];
+      var sd = suggest && suggest.data ? (Array.isArray(suggest.data) ? suggest.data : (suggest.data.list || [])) : [];
+      var student = rd.student || {};
+      var grades = rd.grades || [];
+      var weaknesses = rd.weaknesses || [];
+      var improvements = rd.improvements || sd;
+      var html = '<div class="report-header"><h2>学情分析报告</h2><div style="font-size:13px;color:var(--text2);">EduGrade 学生成绩管理系统</div></div>';
+      html += '<div class="report-meta"><div>学生姓名: <b>' + Util.escapeHtml(student.name || studentName) + '</b></div>' +
+        '<div>学号: <b>' + Util.escapeHtml(student.student_no || '') + '</b></div>' +
+        '<div>班级: <b>' + Util.escapeHtml(student.class_name || '') + '</b></div>' +
+        '<div>报告日期: <b>' + new Date().toLocaleDateString('zh-CN') + '</b></div></div>';
+      if (grades.length) {
+        html += '<div class="report-section"><h4>成绩汇总</h4><div class="table-wrap"><table><thead><tr><th>考试</th><th>总分</th><th>平均分</th><th>排名</th><th>班级排名</th></tr></thead><tbody>' +
+          grades.map(function (g) {
+            return '<tr><td>' + Util.escapeHtml(g.exam_name || '') + '</td><td>' + (g.total_score != null ? g.total_score : '-') + '</td>' +
+              '<td>' + (g.average != null ? parseFloat(g.average).toFixed(1) : '-') + '</td>' +
+              '<td>' + (g.rank != null ? g.rank : '-') + '</td><td>' + (g.class_rank != null ? g.class_rank : '-') + '</td></tr>';
+          }).join('') + '</tbody></table></div></div>';
+      }
+      if (td.length) {
+        html += '<div class="report-section"><h4>成绩趋势</h4><div class="chart-box" style="min-height:250px;"><canvas id="chartTrend"></canvas></div></div>';
+      }
+      if (weaknesses.length) {
+        html += '<div class="report-section"><h4>薄弱环节分析</h4>' +
+          weaknesses.map(function (w) {
+            return '<div class="suggest-item" style="padding:12px 16px;border-left:3px solid var(--primary);background:var(--primary-light);border-radius:0 var(--radius-sm) var(--radius-sm) 0;margin-bottom:8px;"><div style="font-weight:600;font-size:13px;color:var(--primary);">' + Util.escapeHtml(w.subject || '') + '</div><div style="font-size:13px;color:var(--text);margin-top:2px;">' + Util.escapeHtml(w.detail || w.description || '') + '</div></div>';
+          }).join('') + '</div>';
+      }
+      if (improvements.length) {
+        html += '<div class="report-section"><h4>改进建议</h4>' +
+          improvements.map(function (s) {
+            return '<div class="suggest-item" style="padding:12px 16px;border-left:3px solid var(--primary);background:var(--primary-light);border-radius:0 var(--radius-sm) var(--radius-sm) 0;margin-bottom:8px;"><div style="font-weight:600;font-size:13px;color:var(--primary);">' + Util.escapeHtml(s.subject || s.subject_name || '') + '</div><div style="font-size:13px;color:var(--text);margin-top:2px;">' + Util.escapeHtml(s.suggestion || s.text || s.detail || '') + '</div></div>';
+          }).join('') + '</div>';
+      }
+      if (!grades.length && !td.length && !weaknesses.length && !improvements.length) {
+        html += '<div class="empty"><div class="ei">&#128203;</div><p>暂无学情数据</p></div>';
+      }
+      $('#reportContent').innerHTML = html;
+      $('#reportContent').style.display = '';
+      $('#reportEmpty').style.display = 'none';
+      $('#btnPrintReport').style.display = '';
+
+      setTimeout(function () {
+        if (td.length) {
+          drawChart('chartTrend', 'line', td.map(function (d) { return d.exam_name || d.name || ''; }), td.map(function (d) { return d.total_score || d.score || 0; }), '总分趋势', { plugins: { legend: null } });
+        }
+      }, 100);
+    }).catch(function () { Util.showToast('加载报告失败', 'error'); });
+  }
+
+  /* ====== SUGGEST (学习建议) ====== */
+  function loadSuggests() {
+    var sid = $('#suggestStudentSelect').value;
+    if (!sid) { Util.showToast('请选择学生', 'error'); return; }
+    API.suggest.get(sid).then(function (r) {
+      var list = r && r.data ? (Array.isArray(r.data) ? r.data : (r.data.list || r.data.records || [])) : [];
+      $('#suggestContent').innerHTML = '';
+      $('#suggestEmpty').style.display = 'none';
+      if (!list.length) { $('#suggestContent').innerHTML = '<div class="empty"><div class="ei">&#128161;</div><p>暂无学习建议</p></div>'; return; }
+      var html = '';
+      list.forEach(function (s, i) {
+        var priorityBadge = (s.priority === 'high' || i === 0) ? '<span class="badge badge-danger">高优先</span>' :
+          (s.priority === 'medium' || i === 1) ? '<span class="badge badge-warning">中优先</span>' :
+          '<span class="badge badge-info">建议</span>';
+        html += '<div class="suggest-card">' +
+          '<div class="srank" style="width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0;' + (i === 0 ? 'background:var(--danger-light);color:var(--danger);' : i === 1 ? 'background:var(--warning-light);color:var(--warning);' : 'background:var(--primary-light);color:var(--primary);') + '">' + (i + 1) + '</div>' +
+          '<div class="suggest-info"><div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">' +
+          '<span class="ssub" style="font-weight:600;font-size:14px;">' + Util.escapeHtml(s.subject || s.subject_name || '') + '</span>' + priorityBadge +
+          '</div><div class="sdesc" style="font-size:12px;color:var(--text2);margin-top:4px;line-height:1.5;">' + Util.escapeHtml(s.suggestion || s.text || s.detail || '') + '</div></div></div>';
+      });
+      $('#suggestContent').innerHTML = html;
+    }).catch(function () { Util.showToast('加载建议失败', 'error'); });
+  }
+
+  /* ====== USERS ====== */
+  function loadUsers() {
+    API.users.list().then(function (r) {
+      if (!r || !r.success) { Util.showToast(r && r.message || '加载失败', 'error'); return; }
+      var list = r.data; if (!Array.isArray(list)) list = list.list || list.records || list.data || [];
+      $('#userTableBody').innerHTML = list.length ? list.map(function (u) {
+        return '<tr><td>' + u.id + '</td><td>' + Util.escapeHtml(u.username) + '</td>' +
+          '<td><span class="badge badge-info">' + Util.escapeHtml(u.role || '') + '</span></td>' +
+          '<td>' + Util.escapeHtml(u.phone || '') + '</td>' +
+          '<td>' + Util.formatDate(u.created_at) + '</td>' +
+          '<td><button class="btn btn-danger btn-sm btn-del-user" data-id="' + u.id + '">删除</button></td></tr>';
+      }).join('') : '<tr><td colspan="6"><div class="empty"><div class="ei">&#128101;</div><p>暂无用户</p></div></td></tr>';
+    });
+  }
+
+  function saveUser() {
+    var data = { username: $('#newUsername').value.trim(), display_name: $('#newUserDisplayName').value.trim(), role: $('#newUserRole').value, phone: $('#newUserPhone').value.trim(), password: $('#newUserPassword').value };
+    if (!data.username || !data.password) { Util.showToast('请填写用户名和密码', 'error'); return; }
+    API.users.add(data).then(function (r) {
+      if (r && r.success) { Util.showToast('添加成功', 'success'); Util.closeModal('modalUser'); loadUsers(); }
+      else Util.showToast((r && r.message) || '添加失败', 'error');
+    });
+  }
+
+  function deleteUser(id) {
+    Util.confirm('确定删除该用户吗？', function () {
+      API.users.del(id).then(function (r) {
+        if (r && r.success) { Util.showToast('删除成功', 'success'); loadUsers(); }
+        else Util.showToast((r && r.message) || '删除失败', 'error');
+      });
+    });
+  }
+
+  /* ====== LOGS ====== */
+  function loadLogs(page) {
+    page = page || 1;
+    var user = $('#logUserFilter').value;
+    API.logs(page, user).then(function (r) {
+      if (!r || !r.success) { Util.showToast(r && r.message || '加载失败', 'error'); return; }
+      var data = r.data; var list = data.list || data.records || data.data || []; var total = data.total || 0;
+      $('#logTableBody').innerHTML = list.length ? list.map(function (l) {
+        return '<tr><td>' + l.id + '</td><td class="log-user">' + Util.escapeHtml(l.user || l.username || '') + '</td>' +
+          '<td>' + Util.escapeHtml(l.action || l.operation || '') + '</td><td>' + Util.escapeHtml(l.detail || l.description || '') + '</td>' +
+          '<td>' + Util.formatDate(l.created_at || l.time) + '</td></tr>';
+      }).join('') : '<tr><td colspan="5"><div class="empty"><div class="ei">&#128196;</div><p>暂无日志</p></div></td></tr>';
+      Util.renderPagination('logPagination', page, total, 50, loadLogs);
+    });
+  }
+
+  /* ====== PASSWORD ====== */
+  function changePassword() {
+    var oldPwd = $('#oldPassword').value, newPwd = $('#newPassword').value, confirmPwd = $('#confirmPassword').value;
+    var re = $('#pwdResult');
+    if (!oldPwd || !newPwd || !confirmPwd) { re.innerHTML = '<div class="alert alert-error">请填写所有字段</div>'; return; }
+    if (newPwd !== confirmPwd) { re.innerHTML = '<div class="alert alert-error">两次新密码不一致</div>'; return; }
+    API.changePwd(oldPwd, newPwd).then(function (r) {
+      if (r && r.success) { re.innerHTML = '<div class="alert alert-success">密码修改成功</div>'; $('#oldPassword').value = ''; $('#newPassword').value = ''; $('#confirmPassword').value = ''; }
+      else re.innerHTML = '<div class="alert alert-error">' + ((r && r.message) || '修改失败') + '</div>';
+    });
+  }
+
+  /* ====== MAKEUP EXAM CHANGE HANDLER ====== */
+  $('#makeupExam').addEventListener('change', function () {
+    var examId = this.value; if (!examId) return;
+    API.grades.list(examId).then(function (r) {
+      var data = r && r.data ? r.data : {};
+      var subjects = data.subjects || [];
+      $('#makeupSubjectFields').innerHTML = subjects.map(function (s) {
+        return '<div class="form-group"><label>' + Util.escapeHtml(s.name || s.subject_name) + '</label>' +
+          '<input type="number" data-subject="' + (s.id || s.subject_id) + '" placeholder="分数" min="0" max="300" step="0.5"></div>';
+      }).join('');
+    });
+  });
+
+  /* ====== STATS TAB SWITCHING ====== */
+  $$('#stats-section .tab').forEach(function (t) {
+    t.addEventListener('click', function () {
+      var tabName = this.dataset.tab;
+      $$('#stats-section .tab').forEach(function (x) { x.classList.remove('active'); });
+      this.classList.add('active');
+      ['tab-rank', 'tab-class-compare', 'tab-distribution', 'tab-warnings'].forEach(function (id) {
+        var panel = document.getElementById(id); if (panel) panel.style.display = (id === tabName) ? '' : 'none';
+      });
+      if (tabName === 'tab-rank') loadRank();
+      else if (tabName === 'tab-class-compare') loadClassCompare();
+      else if (tabName === 'tab-distribution') loadDistribution();
+      else if (tabName === 'tab-warnings') loadWarnings();
+    });
+  });
+
+  $('#rankType').addEventListener('change', function () {
+    var subSel = $('#rankSubject');
+    if (this.value === 'subject') {
+      subSel.style.display = '';
+      loadAllSubjects(function (list) { populateSelect(subSel, list, 'id', 'name', '-- 选择科目 --'); });
+    } else { subSel.style.display = 'none'; loadRank(); }
+  });
+  $('#rankSubject').addEventListener('change', function () { loadRank(); });
+  $('#statsExamSelect').addEventListener('change', function () { loadRank(); loadClassCompare(); loadDistribution(); });
+  $('#statsSubjectFilter').addEventListener('change', function () { loadDistribution(); });
+
+  /* ====== EVENT DELEGATION FOR DYNAMIC BUTTONS ====== */
+  document.addEventListener('click', function (e) {
+    var el = e.target;
+
+    if (el.classList.contains('btn-edit-student')) { e.preventDefault(); openStudentModal(el.dataset.id); }
+    if (el.classList.contains('btn-del-student')) { e.preventDefault(); deleteStudent(el.dataset.id); }
+
+    if (el.classList.contains('btn-edit-class')) { e.preventDefault(); openClassModal(el.dataset.id); }
+    if (el.classList.contains('btn-del-class')) { e.preventDefault(); deleteClass(el.dataset.id); }
+
+    if (el.classList.contains('btn-del-subject')) { e.preventDefault(); deleteSubject(el.dataset.id); }
+
+    if (el.classList.contains('btn-edit-exam')) { e.preventDefault(); openExamModal(el.dataset.id); }
+    if (el.classList.contains('btn-publish-exam')) { e.preventDefault(); publishExam(el.dataset.id); }
+    if (el.classList.contains('btn-retract-exam')) { e.preventDefault(); retractExam(el.dataset.id); }
+    if (el.classList.contains('btn-lock-exam')) { e.preventDefault(); lockExam(el.dataset.id); }
+    if (el.classList.contains('btn-del-exam')) { e.preventDefault(); deleteExam(el.dataset.id); }
+
+    if (el.classList.contains('btn-del-error')) { e.preventDefault(); deleteError(el.dataset.id); }
+
+    if (el.classList.contains('btn-del-user')) { e.preventDefault(); deleteUser(el.dataset.id); }
+  });
+
+  /* ====== BUTTON BINDINGS ====== */
+  $('#btnAddStudent').addEventListener('click', function () { openStudentModal(); });
+  $('#btnStudentSearch').addEventListener('click', function () { loadStudents(1); });
+  $('#studentSearch').addEventListener('keydown', function (e) { if (e.key === 'Enter') loadStudents(1); });
+  $('#btnSaveStudent').addEventListener('click', function () { saveStudent(); });
+
+  $('#btnAddClass').addEventListener('click', function () { openClassModal(); });
+  $('#btnSaveClass').addEventListener('click', function () { saveClass(); });
+
+  $('#btnAddSubject').addEventListener('click', function () { $('#subjectNameInput').value = ''; Util.openModal('modalSubject'); });
+  $('#btnSaveSubject').addEventListener('click', function () { saveSubject(); });
+
+  $('#btnAddExam').addEventListener('click', function () { openExamModal(); });
+  $('#btnExamFilter').addEventListener('click', function () { loadExams(); });
+  $('#btnSaveExam').addEventListener('click', function () { saveExam(); });
+
+  $('#gradeExamSelect').addEventListener('change', function () { loadGradeTable(); });
+  $('#btnRefreshGrades').addEventListener('click', function () { loadGradeTable(); });
+  $('#btnBatchSave').addEventListener('click', function () { batchSaveGrades(); });
+  $('#btnLockGrades').addEventListener('click', function () { if (_currentGradeExam) lockExam(_currentGradeExam); });
+  $('#btnCsvImport').addEventListener('click', function () { openCsvImportModal(); });
+  $('#btnExportCsv').addEventListener('click', function () { if (_currentGradeExam) exportCsv(_currentGradeExam); else Util.showToast('请先选择考试', 'warning'); });
+  $('#btnMakeup').addEventListener('click', function () { openMakeupModal(); });
+  $('#btnSaveMakeup').addEventListener('click', function () { saveMakeup(); });
+  $('#btnImportCsv').addEventListener('click', function () { importCsv(); });
+
+  $('#btnAddError').addEventListener('click', function () { openErrorModal(); });
+  $('#btnErrorSearch').addEventListener('click', function () { loadErrors(1); loadErrorStats(); });
+  $('#btnSaveError').addEventListener('click', function () { saveError(); });
+  $('#errorStudentSelect').addEventListener('change', function () { loadErrors(1); loadErrorStats(); });
+  $('#errorExamSelect').addEventListener('change', function () { loadErrors(1); loadErrorStats(); });
+
+  $('#btnAbilityLoad').addEventListener('click', function () { loadAbility(); });
+
+  $('#btnReportLoad').addEventListener('click', function () { loadReport(); });
+  $('#btnPrintReport').addEventListener('click', function () { window.print(); });
+
+  $('#btnSuggestLoad').addEventListener('click', function () { loadSuggests(); });
+
+  $('#btnAddUser').addEventListener('click', function () {
+    $('#newUsername').value = ''; $('#newUserPassword').value = ''; $('#newUserDisplayName').value = '';
+    $('#newUserPhone').value = ''; $('#newUserRole').value = 'admin'; Util.openModal('modalUser');
+  });
+  $('#btnSaveUser').addEventListener('click', function () { saveUser(); });
+
+  $('#btnLogSearch').addEventListener('click', function () { loadLogs(1); });
+  $('#logUserFilter').addEventListener('keydown', function (e) { if (e.key === 'Enter') loadLogs(1); });
+
+  $('#btnChangePwd').addEventListener('click', function () { changePassword(); });
+
+  /* ====== INITIAL LOAD ====== */
+  loadDashboard();
+  loadClassOptions();
+  loadAllStudents();
+  loadAllExams();
+  loadAllSubjects();
+  loadAllClasses();
+  loadStatsExams();
+  loadGradeExams();
+
+  loadAllStudents(function (list) {
+    populateSelect($('#errorStudentSelect'), list, 'id', 'student_no', '-- 选择学生 --');
+    populateSelect($('#abilityStudentSelect'), list, 'id', 'student_no', '-- 选择学生 --');
+    populateSelect($('#reportStudentSelect'), list, 'id', 'student_no', '-- 选择学生 --');
+    populateSelect($('#suggestStudentSelect'), list, 'id', 'student_no', '-- 选择学生 --');
+  });
+  loadAllExams(function (list) {
+    populateSelect($('#errorExamSelect'), list, 'id', 'name', '-- 选择考试 --');
+    populateSelect($('#abilityExamSelect'), list, 'id', 'name', '-- 选择考试 --');
+  });
+  loadAllSubjects(function (list) { populateSelect($('#errorSubjectFilter'), list, 'name', 'name', '全部科目'); });
+
+})();
+</script>
+</body>
+</html>

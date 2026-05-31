@@ -1,0 +1,50 @@
+[
+  {
+    "created_at": "2026-05-31 10:24:08",
+    "id": "admin",
+    "name": "系统管理员",
+    "password": "6527dd1705a",
+    "phone": "",
+    "role": "admin"
+  },
+  {
+    "created_at": "2026-05-31 10:24:08",
+    "id": "T001",
+    "name": "张老师",
+    "password": "6527dd1705a",
+    "phone": "",
+    "role": "admin"
+  },
+  {
+    "created_at": "2026-05-31 10:24:08",
+    "id": "S2024001",
+    "name": "张三",
+    "password": "6527dd1705a",
+    "phone": "",
+    "role": "student"
+  },
+  {
+    "created_at": "2026-05-31 10:24:08",
+    "id": "S2024002",
+    "name": "李四",
+    "password": "6527dd1705a",
+    "phone": "",
+    "role": "student"
+  },
+  {
+    "created_at": "2026-05-31 10:24:08",
+    "id": "P2024001",
+    "name": "张三家长",
+    "password": "6527dd1705a",
+    "phone": "",
+    "role": "parent"
+  },
+  {
+    "created_at": "2026-05-31 10:24:18",
+    "id": "test123",
+    "name": "????",
+    "password": "6527dd1705a",
+    "phone": "",
+    "role": "student"
+  }
+]

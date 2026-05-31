@@ -1,0 +1,266 @@
+[
+  {
+    "comments": {},
+    "exam_id": "EXAM1",
+    "is_makeup": false,
+    "scores": {
+      "化学": "90",
+      "数学": "135",
+      "物理": "85",
+      "英语": "110",
+      "语文": "120"
+    },
+    "student_id": "S2024001",
+    "submitted_at": "2026-05-31 10:24:08",
+    "submitted_by": "admin"
+  },
+  {
+    "comments": {},
+    "exam_id": "EXAM1",
+    "is_makeup": false,
+    "scores": {
+      "化学": "82",
+      "数学": "142",
+      "物理": "78",
+      "英语": "125",
+      "语文": "105"
+    },
+    "student_id": "S2024002",
+    "submitted_at": "2026-05-31 10:24:08",
+    "submitted_by": "admin"
+  },
+  {
+    "comments": {},
+    "exam_id": "EXAM1",
+    "is_makeup": false,
+    "scores": {
+      "化学": "76",
+      "数学": "88",
+      "物理": "92",
+      "英语": "105",
+      "语文": "98"
+    },
+    "student_id": "S2024003",
+    "submitted_at": "2026-05-31 10:24:08",
+    "submitted_by": "admin"
+  },
+  {
+    "comments": {},
+    "exam_id": "EXAM1",
+    "is_makeup": false,
+    "scores": {
+      "化学": "88",
+      "数学": "120",
+      "物理": "70",
+      "英语": "118",
+      "语文": "115"
+    },
+    "student_id": "S2024004",
+    "submitted_at": "2026-05-31 10:24:08",
+    "submitted_by": "admin"
+  },
+  {
+    "comments": {},
+    "exam_id": "EXAM1",
+    "is_makeup": false,
+    "scores": {
+      "化学": "95",
+      "数学": "95",
+      "物理": "88",
+      "英语": "100",
+      "语文": "130"
+    },
+    "student_id": "S2024005",
+    "submitted_at": "2026-05-31 10:24:08",
+    "submitted_by": "admin"
+  },
+  {
+    "comments": {},
+    "exam_id": "EXAM1",
+    "is_makeup": false,
+    "scores": {
+      "化学": "70",
+      "数学": "115",
+      "物理": "65",
+      "英语": "90",
+      "语文": "108"
+    },
+    "student_id": "S2024006",
+    "submitted_at": "2026-05-31 10:24:08",
+    "submitted_by": "admin"
+  },
+  {
+    "comments": {},
+    "exam_id": "EXAM1",
+    "is_makeup": false,
+    "scores": {
+      "化学": "85",
+      "数学": "130",
+      "物理": "80",
+      "英语": "115",
+      "语文": "122"
+    },
+    "student_id": "S2024007",
+    "submitted_at": "2026-05-31 10:24:08",
+    "submitted_by": "admin"
+  },
+  {
+    "comments": {},
+    "exam_id": "EXAM1",
+    "is_makeup": false,
+    "scores": {
+      "化学": "65",
+      "数学": "78",
+      "物理": "75",
+      "英语": "88",
+      "语文": "95"
+    },
+    "student_id": "S2024008",
+    "submitted_at": "2026-05-31 10:24:08",
+    "submitted_by": "admin"
+  },
+  {
+    "comments": {},
+    "exam_id": "EXAM2",
+    "is_makeup": false,
+    "scores": {
+      "化学": "92",
+      "历史": "72",
+      "政治": "80",
+      "数学": "138",
+      "物理": "88",
+      "生物": "78",
+      "英语": "115",
+      "语文": "125"
+    },
+    "student_id": "S2024001",
+    "submitted_at": "2026-05-31 10:24:08",
+    "submitted_by": "admin"
+  },
+  {
+    "comments": {},
+    "exam_id": "EXAM2",
+    "is_makeup": false,
+    "scores": {
+      "化学": "85",
+      "历史": "65",
+      "政治": "70",
+      "数学": "145",
+      "物理": "80",
+      "生物": "82",
+      "英语": "128",
+      "语文": "108"
+    },
+    "student_id": "S2024002",
+    "submitted_at": "2026-05-31 10:24:08",
+    "submitted_by": "admin"
+  },
+  {
+    "comments": {},
+    "exam_id": "EXAM2",
+    "is_makeup": false,
+    "scores": {
+      "化学": "78",
+      "历史": "75",
+      "政治": "72",
+      "数学": "92",
+      "物理": "95",
+      "生物": "88",
+      "英语": "108",
+      "语文": "102"
+    },
+    "student_id": "S2024003",
+    "submitted_at": "2026-05-31 10:24:08",
+    "submitted_by": "admin"
+  },
+  {
+    "comments": {},
+    "exam_id": "EXAM2",
+    "is_makeup": false,
+    "scores": {
+      "化学": "90",
+      "历史": "68",
+      "政治": "75",
+      "数学": "122",
+      "物理": "72",
+      "生物": "70",
+      "英语": "120",
+      "语文": "118"
+    },
+    "student_id": "S2024004",
+    "submitted_at": "2026-05-31 10:24:08",
+    "submitted_by": "admin"
+  },
+  {
+    "comments": {},
+    "exam_id": "EXAM2",
+    "is_makeup": false,
+    "scores": {
+      "化学": "96",
+      "历史": "78",
+      "政治": "82",
+      "数学": "98",
+      "物理": "90",
+      "生物": "85",
+      "英语": "105",
+      "语文": "135"
+    },
+    "student_id": "S2024005",
+    "submitted_at": "2026-05-31 10:24:08",
+    "submitted_by": "admin"
+  },
+  {
+    "comments": {},
+    "exam_id": "EXAM2",
+    "is_makeup": false,
+    "scores": {
+      "化学": "72",
+      "历史": "70",
+      "政治": "65",
+      "数学": "118",
+      "物理": "68",
+      "生物": "65",
+      "英语": "95",
+      "语文": "110"
+    },
+    "student_id": "S2024006",
+    "submitted_at": "2026-05-31 10:24:08",
+    "submitted_by": "admin"
+  },
+  {
+    "comments": {},
+    "exam_id": "EXAM2",
+    "is_makeup": false,
+    "scores": {
+      "化学": "88",
+      "历史": "72",
+      "政治": "76",
+      "数学": "135",
+      "物理": "82",
+      "生物": "80",
+      "英语": "118",
+      "语文": "128"
+    },
+    "student_id": "S2024007",
+    "submitted_at": "2026-05-31 10:24:08",
+    "submitted_by": "admin"
+  },
+  {
+    "comments": {},
+    "exam_id": "EXAM2",
+    "is_makeup": false,
+    "scores": {
+      "化学": "68",
+      "历史": "60",
+      "政治": "62",
+      "数学": "82",
+      "物理": "78",
+      "生物": "72",
+      "英语": "90",
+      "语文": "98"
+    },
+    "student_id": "S2024008",
+    "submitted_at": "2026-05-31 10:24:08",
+    "submitted_by": "admin"
+  }
+]

@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduGrade - 家长中心</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="app">
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <h2>Edu<span>Grade</span></h2>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="#grades-section" class="active" data-section="grades-section">子女成绩</a>
+            <a href="#trend-section" data-section="trend-section">成绩趋势</a>
+            <a href="#ability-section" data-section="ability-section">能力图谱</a>
+            <a href="#report-section" data-section="report-section">学情报告</a>
+            <a href="#password-section" data-section="password-section">修改密码</a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-name" id="sidebar-name"></div>
+                <div id="sidebar-role">家长</div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="main">
+        <div class="topbar">
+            <h2>家长中心</h2>
+            <div class="topbar-actions">
+                <button class="theme-btn" onclick="toggleTheme()" title="切换主题">&#9681;</button>
+                <button class="btn btn-outline btn-sm" onclick="window.location.href='login.html'">返回登录页</button>
+                <button class="btn btn-outline btn-sm" onclick="logout()">退出登录</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- 子女成绩 -->
+            <section class="page-section active" id="grades-section">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title" id="grades-title">子女成绩</div>
+                    </div>
+                    <div class="card-body">
+                        <div id="grades-result"></div>
+                        <div id="grades-content"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 成绩趋势 -->
+            <section class="page-section" id="trend-section">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">成绩趋势</div>
+                    </div>
+                    <div class="card-body">
+                        <div id="trend-result"></div>
+                        <div class="chart-row single">
+                            <div class="chart-box" id="trend-chart-box">
+                                <canvas id="trendChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 能力图谱 -->
+            <section class="page-section" id="ability-section">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">能力图谱</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="filter-row">
+                            <div class="form-group" style="margin-bottom:0">
+                                <select id="abilityExamSelect" style="min-width:200px">
+                                    <option value="">-- 选择考试 --</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="ability-result"></div>
+                        <div class="chart-row single">
+                            <div class="chart-box" id="ability-chart-box">
+                                <canvas id="abilityChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 学情报告 -->
+            <section class="page-section" id="report-section">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">学情报告</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="filter-row">
+                            <div class="form-group" style="margin-bottom:0">
+                                <select id="reportExamSelect" style="min-width:200px">
+                                    <option value="">-- 选择考试 --</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="report-result"></div>
+                        <div id="report-content"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 修改密码 -->
+            <section class="page-section" id="password-section">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">修改密码</div>
+                    </div>
+                    <div class="card-body">
+                        <div id="pwd-result"></div>
+                        <div class="form-group">
+                            <label>原密码</label>
+                            <input type="password" id="oldPwd" style="max-width:360px" placeholder="请输入原密码">
+                        </div>
+                        <div class="form-group">
+                            <label>新密码</label>
+                            <input type="password" id="newPwd" style="max-width:360px" placeholder="请输入新密码">
+                        </div>
+                        <div class="form-group">
+                            <label>确认新密码</label>
+                            <input type="password" id="confirmPwd" style="max-width:360px" placeholder="请再次输入新密码">
+                        </div>
+                        <button class="btn btn-primary" onclick="changePassword()">修改密码</button>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="js/common.js"></script>
+<script src="js/api.js"></script>
+<script>
+(function() {
+    if (!Common.initAuth('parent')) return;
+
+    var parentId = getUserId();
+    var parentName = getUserName();
+    var childId = null;
+    var childName = '';
+    var trendChart = null;
+    var abilityChart = null;
+    var examsCache = [];
+
+    document.getElementById('sidebar-name').textContent = parentName;
+    document.getElementById('sidebar-role').textContent = '家长';
+
+    document.querySelectorAll('.sidebar-nav a').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            var sectionId = this.getAttribute('data-section');
+            document.querySelectorAll('.page-section').forEach(function(s) { s.classList.remove('active'); });
+            document.getElementById(sectionId).classList.add('active');
+            document.querySelectorAll('.sidebar-nav a').forEach(function(a) { a.classList.remove('active'); });
+            this.classList.add('active');
+            switchSection(sectionId);
+        });
+    });
+
+    document.getElementById('reportExamSelect').addEventListener('change', function() {
+        var eid = this.value;
+        if (eid) loadReport(eid);
+    });
+
+    document.getElementById('abilityExamSelect').addEventListener('change', function() {
+        var eid = this.value;
+        if (eid) loadAbility(eid);
+    });
+
+    function switchSection(sectionId) {
+        if (sectionId === 'grades-section') loadGrades();
+        else if (sectionId === 'trend-section') loadTrend();
+        else if (sectionId === 'ability-section') loadAbilitySelector();
+        else if (sectionId === 'report-section') loadReportSelector();
+    }
+
+    function showResult(containerId, type, msg) {
+        var el = document.getElementById(containerId);
+        if (!el) return;
+        el.innerHTML = '<div class="alert alert-' + type + '">' + Common.escapeHtml(msg) + '</div>';
+    }
+
+    function showEmpty(containerId, icon, text) {
+        document.getElementById(containerId).innerHTML = '<div class="empty"><div class="empty-icon">' + icon + '</div><p>' + Common.escapeHtml(text) + '</p></div>';
+    }
+
+    function showLoading(id) {
+        Common.showLoading(id);
+    }
+
+    function gradeClass(score) {
+        if (score >= 90) return 's-a';
+        if (score >= 80) return 's-b';
+        if (score >= 70) return 's-c';
+        return 's-d';
+    }
+
+    function gradeText(score) {
+        if (score >= 90) return 'A';
+        if (score >= 80) return 'B';
+        if (score >= 70) return 'C';
+        if (score >= 60) return 'D';
+        return 'F';
+    }
+
+    function loadExamsCache(callback) {
+        if (examsCache.length > 0) { callback(examsCache); return; }
+        API.exams.list('published').then(function(res) {
+            if ((res && res.success) && res.data) {
+                examsCache = Array.isArray(res.data) ? res.data : (res.data.list || res.data.records || []);
+            }
+        }).catch(function() {}).then(function() { callback(examsCache); });
+    }
+
+    function findChild(callback, onNotFound) {
+        if (childId) {
+            callback();
+            return;
+        }
+
+        var stored = localStorage.getItem('parent_child_id');
+        if (stored) {
+            childId = stored;
+            childName = localStorage.getItem('parent_child_name') || '';
+            if (childName) {
+                document.getElementById('grades-title').textContent = childName + ' 的成绩';
+            }
+            callback();
+            return;
+        }
+
+        showLoading('grades-content');
+        API.students.list({search: parentId}).then(function(res) {
+            if ((res && res.success) && res.data) {
+                var list = res.data.students || res.data;
+                var found = null;
+                if (Array.isArray(list) && list.length > 0) {
+                    found = list[0];
+                } else if (list && !Array.isArray(list) && (list.student_id || list.id)) {
+                    found = list;
+                }
+                if (found) {
+                    childId = found.student_id || found.id;
+                    childName = found.name || found.student_name || '';
+                    localStorage.setItem('parent_child_id', childId);
+                    localStorage.setItem('parent_child_name', childName);
+                    document.getElementById('grades-title').textContent = childName + ' 的成绩';
+                    callback();
+                    return;
+                }
+            }
+            if (onNotFound) onNotFound();
+            else showEmpty('grades-content', '\u{1F464}', '未找到关联子女信息<br>请确认您的账号已与子女绑定');
+        }).catch(function() {
+            if (onNotFound) onNotFound();
+            else showEmpty('grades-content', '\u{1F464}', '加载失败，请检查网络连接');
+        });
+    }
+
+    // ---- 子女成绩 ----
+    function loadGrades() {
+        document.getElementById('grades-result').innerHTML = '';
+        findChild(function() {
+            showLoading('grades-content');
+            API.grades.student(childId).then(function(res) {
+                if (!res || !res.success || !res.data) {
+                    showEmpty('grades-content', '\u{1F4C4}', '暂无成绩数据');
+                    return;
+                }
+                renderGrades(res.data);
+            }).catch(function() {
+                showEmpty('grades-content', '\u{1F4C4}', '加载失败');
+            });
+        });
+    }
+
+    function renderGrades(data) {
+        var gradesList = data.grades || data;
+        if (!gradesList || !gradesList.length) {
+            showEmpty('grades-content', '\u{1F4C4}', '暂无成绩数据');
+            return;
+        }
+
+        var subjects = new Set();
+        gradesList.forEach(function(g) {
+            if (g.scores) Object.keys(g.scores).forEach(function(s) { subjects.add(s); });
+        });
+        var subjectNames = Array.from(subjects);
+
+        var html = '<div class="table-wrap"><table><thead><tr>';
+        html += '<th>考试名称</th><th>日期</th>';
+        subjectNames.forEach(function(s) { html += '<th>' + Common.escapeHtml(s) + '</th>'; });
+        html += '<th>总分</th><th>等级</th>';
+        html += '</tr></thead><tbody>';
+
+        gradesList.forEach(function(g) {
+            html += '<tr>';
+            html += '<td>' + Common.escapeHtml(g.exam_name || '-') + '</td>';
+            html += '<td>' + Common.formatDate(g.exam_date || g.date) + '</td>';
+            var scores = g.scores || {};
+            var total = 0, count = 0;
+            subjectNames.forEach(function(sub) {
+                var score = scores[sub];
+                html += '<td>' + (score != null ? parseInt(score) : '-') + '</td>';
+                if (score != null) { total += parseFloat(score); count++; }
+            });
+            html += '<td><b>' + (count > 0 ? total.toFixed(1) : '-') + '</b></td>';
+            var avg = count > 0 ? total / count : 0;
+            html += '<td class="' + gradeClass(avg) + '">' + gradeText(avg) + '</td>';
+            html += '</tr>';
+        });
+        html += '</tbody></table></div>';
+        document.getElementById('grades-content').innerHTML = html;
+    }
+
+    // ---- 成绩趋势 ----
+    function loadTrend() {
+        document.getElementById('trend-result').innerHTML = '';
+        findChild(function() {
+            API.stats.trend(childId).then(function(res) {
+                if (!res || !res.success || !res.data) {
+                    document.getElementById('trend-chart-box').innerHTML = '<canvas id="trendChart"></canvas>';
+                    showResult('trend-result', 'info', '暂无趋势数据');
+                    if (trendChart) { trendChart.destroy(); trendChart = null; }
+                    return;
+                }
+                renderTrend(res.data);
+            }).catch(function() {
+                document.getElementById('trend-chart-box').innerHTML = '<div class="empty"><div class="empty-icon">\u{1F4C8}</div><p>加载失败</p></div>';
+            });
+        });
+    }
+
+    function renderTrend(data) {
+        var trendList = data.trends || data;
+        if (!trendList || !trendList.length) {
+            document.getElementById('trend-chart-box').innerHTML = '<canvas id="trendChart"></canvas>';
+            showResult('trend-result', 'info', '暂无趋势数据');
+            return;
+        }
+
+        if (!document.getElementById('trendChart')) {
+            document.getElementById('trend-chart-box').innerHTML = '<canvas id="trendChart"></canvas>';
+        }
+
+        var labels = [];
+        var totals = [];
+        trendList.forEach(function(t) {
+            labels.push(t.exam_name || t.name || '-');
+            totals.push(t.total_score || t.total || 0);
+        });
+
+        var ctx = document.getElementById('trendChart').getContext('2d');
+        var gradient = ctx.createLinearGradient(0, 0, 0, 300);
+        gradient.addColorStop(0, 'rgba(67,97,238,0.2)');
+        gradient.addColorStop(1, 'rgba(67,97,238,0.02)');
+
+        if (trendChart) trendChart.destroy();
+        trendChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: '总分趋势',
+                    data: totals,
+                    borderColor: '#4361ee',
+                    backgroundColor: gradient,
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 5,
+                    pointBackgroundColor: '#4361ee',
+                    borderWidth: 2.5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: false } }
+            }
+        });
+    }
+
+    // ---- 能力图谱 ----
+    function loadAbilitySelector() {
+        document.getElementById('ability-result').innerHTML = '';
+        findChild(function() {
+            loadExamsCache(function(exams) {
+                var sel = document.getElementById('abilityExamSelect');
+                sel.innerHTML = '<option value="">-- 选择考试 --</option>' + exams.map(function(e) {
+                    return '<option value="' + e.id + '">' + Common.escapeHtml(e.name) + '</option>';
+                }).join('');
+            });
+        });
+    }
+
+    function loadAbility(eid) {
+        document.getElementById('ability-result').innerHTML = '';
+
+        if (!document.getElementById('abilityChart')) {
+            document.getElementById('ability-chart-box').innerHTML = '<canvas id="abilityChart"></canvas>';
+        }
+
+        var canvas = document.getElementById('abilityChart');
+        if (!canvas) return;
+        var ctx = canvas.getContext('2d');
+        if (abilityChart) { abilityChart.destroy(); abilityChart = null; }
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.font = '14px sans-serif';
+        ctx.fillStyle = '#9ca3af';
+        ctx.textAlign = 'center';
+        ctx.fillText('加载中...', canvas.width / 2, canvas.height / 2);
+
+        findChild(function() {
+            API.stats.ability(childId, eid).then(function(res) {
+                if (!res || !res.success || !res.data) {
+                    showResult('ability-result', 'info', '暂无能力图谱数据');
+                    if (abilityChart) { abilityChart.destroy(); abilityChart = null; }
+                    return;
+                }
+                renderAbility(res.data);
+            }).catch(function() {
+                showResult('ability-result', 'error', '加载失败');
+            });
+        });
+    }
+
+    function renderAbility(data) {
+        var abilities = data.abilities || data;
+        if (!Array.isArray(abilities)) {
+            abilities = [];
+            if (data.scores) {
+                Object.keys(data.scores).forEach(function(k) {
+                    abilities.push({ subject: k, score: data.scores[k], max_score: data.max_scores ? data.max_scores[k] : 100 });
+                });
+            }
+        }
+
+        if (!abilities.length) {
+            showResult('ability-result', 'info', '暂无能力图谱数据');
+            return;
+        }
+
+        var labels = [];
+        var values = [];
+        var maxVals = [];
+        abilities.forEach(function(a) {
+            labels.push(a.subject || a.name || '-');
+            var score = parseFloat(a.score || a.value || 0);
+            var max = parseFloat(a.max_score || a.max || 100);
+            values.push(score > 0 && max > 0 ? (score / max * 100) : 0);
+            maxVals.push(100);
+        });
+
+        if (!document.getElementById('abilityChart')) {
+            document.getElementById('ability-chart-box').innerHTML = '<canvas id="abilityChart"></canvas>';
+        }
+
+        var ctx = document.getElementById('abilityChart').getContext('2d');
+        if (abilityChart) abilityChart.destroy();
+        abilityChart = new Chart(ctx, {
+            type: 'radar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: '能力值',
+                    data: values,
+                    backgroundColor: 'rgba(79,70,229,0.2)',
+                    borderColor: '#4f46e5',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#4f46e5',
+                    pointRadius: 4
+                }, {
+                    label: '满分参考',
+                    data: maxVals,
+                    backgroundColor: 'transparent',
+                    borderColor: 'rgba(148,163,184,0.4)',
+                    borderWidth: 1,
+                    borderDash: [4, 4],
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } },
+                scales: { r: { beginAtZero: true, max: 100, ticks: { stepSize: 20 } } }
+            }
+        });
+
+        var levelHtml = '<div class="flex flex-wrap gap-8 mt-16">';
+        abilities.forEach(function(a, i) {
+            var v = values[i];
+            var level = v >= 85 ? '<span class="badge badge-success">优秀</span>' :
+                        v >= 70 ? '<span class="badge badge-info">良好</span>' :
+                        v >= 55 ? '<span class="badge badge-warning">中等</span>' :
+                        '<span class="badge badge-danger">需提升</span>';
+            levelHtml += '<div style="font-size:13px;color:var(--text2)"><b style="color:var(--text)">' + Common.escapeHtml(labels[i]) + '</b> ' + level + '</div>';
+        });
+        levelHtml += '</div>';
+        document.getElementById('ability-result').innerHTML = levelHtml;
+    }
+
+    // ---- 学情报告 ----
+    function loadReportSelector() {
+        document.getElementById('report-result').innerHTML = '';
+        document.getElementById('report-content').innerHTML = '';
+        findChild(function() {
+            loadExamsCache(function(exams) {
+                var sel = document.getElementById('reportExamSelect');
+                sel.innerHTML = '<option value="">-- 选择考试 --</option>' + exams.map(function(e) {
+                    return '<option value="' + e.id + '">' + Common.escapeHtml(e.name) + '</option>';
+                }).join('');
+            });
+        });
+    }
+
+    function loadReport(eid) {
+        document.getElementById('report-result').innerHTML = '';
+        var contentEl = document.getElementById('report-content');
+        contentEl.innerHTML = '<div class="loading"><span class="spinner"></span> 加载学情报告中...</div>';
+
+        findChild(function() {
+            var pGrades = API.grades.student(childId).then(function(res) {
+                return (res && res.success) ? (res.data.grades || res.data) : [];
+            }).catch(function() { return []; });
+
+            var pRank = API.stats.rank(eid, 'grade').then(function(res) {
+                return (res && res.success) ? res.data : null;
+            }).catch(function() { return null; });
+
+            var pReport = API.report.get(childId).then(function(res) {
+                return (res && res.success) ? res.data : null;
+            }).catch(function() { return null; });
+
+            Promise.all([pGrades, pRank, pReport]).then(function(results) {
+                var allGrades = results[0];
+                var rankData = results[1];
+                var reportData = results[2];
+
+                var examGrades = null;
+                if (Array.isArray(allGrades)) {
+                    examGrades = allGrades.find(function(g) { return String(g.exam_id) === String(eid); });
+                }
+                if (!examGrades && reportData) {
+                    examGrades = reportData;
+                }
+
+                var html = '<div class="report-container">';
+                html += '<div class="report-header">';
+                html += '<h2>学情报告</h2>';
+                html += '<p style="color:var(--text2);margin-top:4px">学生：' + Common.escapeHtml(childName) + '</p>';
+                html += '</div>';
+
+                html += '<div class="report-meta">';
+                html += '<div><b>考试：</b>' + Common.escapeHtml((examGrades && examGrades.exam_name) || '-') + '</div>';
+                html += '<div><b>日期：</b>' + Common.formatDate((examGrades && (examGrades.exam_date || examGrades.date)) || '') + '</div>';
+                var totalScore = 0, subjCount = 0;
+                if (examGrades && examGrades.scores) {
+                    Object.values(examGrades.scores).forEach(function(s) {
+                        if (s != null) { totalScore += parseFloat(s); subjCount++; }
+                    });
+                }
+                html += '<div><b>总分：</b>' + (subjCount > 0 ? totalScore.toFixed(1) : '-') + '</div>';
+                html += '<div><b>科目数：</b>' + subjCount + '</div>';
+                html += '</div>';
+
+                if (rankData) {
+                    var rankList = Array.isArray(rankData) ? rankData : (rankData.rankings || []);
+                    var myRank = null;
+                    rankList.forEach(function(item) {
+                        if (String(item.student_id) === String(childId)) {
+                            myRank = item;
+                        }
+                    });
+                    html += '<div class="report-section"><h4>排名信息</h4>';
+                    html += '<div class="stats-grid" style="margin-bottom:0">';
+                    html += '<div class="stat-card"><div class="si">\u{1F3C6}</div><div class="stat-info"><h3>' + (myRank ? (myRank.grade_rank || myRank.rank || '-') : '-') + '</h3><p>年级排名</p></div></div>';
+                    html += '<div class="stat-card"><div class="si">\u{1F393}</div><div class="stat-info"><h3>' + (myRank ? (myRank.class_rank || '-') : '-') + '</h3><p>班级排名</p></div></div>';
+                    html += '</div></div>';
+                }
+
+                if (examGrades && examGrades.scores) {
+                    html += '<div class="report-section"><h4>各科成绩</h4>';
+                    html += '<div class="table-wrap"><table><thead><tr><th>科目</th><th>分数</th><th>等级</th></tr></thead><tbody>';
+                    Object.keys(examGrades.scores).forEach(function(sub) {
+                        var score = examGrades.scores[sub];
+                        var gCls = gradeClass(score != null ? parseFloat(score) : 0);
+                        var gTxt = gradeText(score != null ? parseFloat(score) : 0);
+                        html += '<tr><td>' + Common.escapeHtml(sub) + '</td><td>' + (score != null ? parseInt(score) : '-') + '</td><td class="' + gCls + '">' + gTxt + '</td></tr>';
+                    });
+                    html += '</tbody></table></div></div>';
+                }
+
+                if (reportData) {
+                    html += '<div class="report-section"><h4>综合评价</h4>';
+                    var comments = reportData.comments || reportData.teacher_comments || reportData.evaluation || '';
+                    html += '<div class="alert alert-info">';
+                    html += '<p style="font-size:14px;line-height:1.8">' + Common.escapeHtml(typeof comments === 'string' ? comments : (comments.text || comments.summary || '暂无评语')) + '</p>';
+                    html += '</div></div>';
+
+                    if (reportData.suggestions) {
+                        var suggestions = reportData.suggestions;
+                        html += '<div class="report-section"><h4>教师建议</h4>';
+                        html += '<ul style="padding-left:20px;color:var(--text2);line-height:2">';
+                        if (Array.isArray(suggestions)) {
+                            suggestions.forEach(function(s) {
+                                html += '<li>' + Common.escapeHtml(typeof s === 'string' ? s : (s.text || s.suggestion || '')) + '</li>';
+                            });
+                        } else if (typeof suggestions === 'string') {
+                            html += '<li>' + Common.escapeHtml(suggestions) + '</li>';
+                        }
+                        html += '</ul></div>';
+                    }
+                }
+
+                html += '</div>';
+                contentEl.innerHTML = html;
+            }).catch(function() {
+                contentEl.innerHTML = '<div class="empty"><div class="empty-icon">\u{1F4C4}</div><p>加载学情报告失败</p></div>';
+            });
+        });
+    }
+
+    // ---- 修改密码 ----
+    window.changePassword = function() {
+        var oldPwd = document.getElementById('oldPwd').value.trim();
+        var newPwd = document.getElementById('newPwd').value.trim();
+        var confirmPwd = document.getElementById('confirmPwd').value.trim();
+        if (!oldPwd || !newPwd || !confirmPwd) {
+            showResult('pwd-result', 'error', '请填写所有密码字段');
+            return;
+        }
+        if (newPwd !== confirmPwd) {
+            showResult('pwd-result', 'error', '两次输入的新密码不一致');
+            return;
+        }
+        if (newPwd.length < 6) {
+            showResult('pwd-result', 'error', '新密码长度不能少于6位');
+            return;
+        }
+        API.changePwd(oldPwd, newPwd).then(function(res) {
+            if ((res && res.success) || (res && res.code === 0)) {
+                showResult('pwd-result', 'success', '密码修改成功');
+                document.getElementById('oldPwd').value = '';
+                document.getElementById('newPwd').value = '';
+                document.getElementById('confirmPwd').value = '';
+            } else {
+                showResult('pwd-result', 'error', (res && res.message) || (res && res.msg) || '修改失败');
+            }
+        }).catch(function() {
+            showResult('pwd-result', 'error', '网络错误');
+        });
+    };
+
+    // 初始加载子女成绩
+    loadGrades();
+})();
+</script>
+
+</body>
+</html>
