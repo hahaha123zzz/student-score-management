@@ -1,0 +1,16 @@
+* text=auto
+
+# Source code — force LF everywhere
+*.cpp      text eol=lf
+*.h        text eol=lf
+*.hpp      text eol=lf
+*.c        text eol=lf
+*.html     text eol=lf
+*.css      text eol=lf
+*.js       text eol=lf
+*.md       text eol=lf
+*.txt      text eol=lf
+CMakeLists.txt text eol=lf
+
+# JSON data files — treat as binary (no EOL conversion at all)
+data/*.json -text
