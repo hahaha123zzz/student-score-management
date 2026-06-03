@@ -527,11 +527,12 @@ grades.csv scores 列:    120|135|110|85|92
 如果你是 C++ 初学者，建议按以下顺序阅读理解代码：
 
 1. **先看 `utils.h` / `utils.cpp`** — 理解基础工具函数的写法（哈希、字符串处理、JSON字符串拼接）
-2. **再看 `sort.h` / `sort.cpp`** — 理解手写的冒泡排序和快速排序算法
+2. **再看 `sort.h` / `sort.cpp`** — 理解手写的冒泡、选择、快速排序三种算法
 3. **然后看 `storage.h` / `storage.cpp`** — 理解 fstream 文件读写和 CSV 格式解析
-4. **接着看 `models.h` / `models.cpp`** — 理解 OOP 的类定义、封装、继承
+4. **接着看 `models.h` / `models.cpp`** — 理解 OOP 的类定义、封装、继承（Person→Admin/Student）
 5. **再接着看 `handlers.h` / `handlers.cpp`** — 理解真实的 CRUD 业务逻辑怎么写
-6. **然后看 `server.h` / `server.cpp`** — 理解 WinSock 网络编程（Socket、bind、listen、accept）
-7. **最后看 `main.cpp`** — 理解程序入口、路由分发、种子数据生成
+6. **然后看 `stats.h` / `stats.cpp`** — 理解统计分析算法（排名、对比、分布、预警）
+7. **再看 `server.h` / `server.cpp`** — 理解 WinSock 网络编程（Socket、bind、listen、accept）
+8. **最后看 `main.cpp`** — 理解程序入口、路由分发、种子数据生成
 
-每个文件都使用初学者友好的写法：没有 lambda 表达式、没有模板、没有智能指针、没有虚函数。
+每个文件都使用初学者友好的写法：没有 lambda 表达式、没有模板、没有智能指针、没有虚函数。所有代码都有详细的中文注释，建议一边看代码一边看注释。
