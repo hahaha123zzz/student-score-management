@@ -212,7 +212,43 @@ namespace utils {
     }
 
     std::string getLogs(int page, int size, const std::string& userFilter) {
-        return "{\"total\":0,\"page\":" + std::to_string(page) + ",\"size\":" + std::to_string(size) + ",\"data\":[]}";
+        std::string path = DATA_DIR + "logs.txt";
+        std::ifstream f(path);
+        if (!f.is_open())
+            return "{\"total\":0,\"page\":" + std::to_string(page) + ",\"size\":" + std::to_string(size) + ",\"data\":[]}";
+
+        std::vector<std::string> allLines;
+        std::string line;
+        while (std::getline(f, line)) {
+            if (line.empty()) continue;
+            if (!userFilter.empty() && line.find(userFilter) == std::string::npos) continue;
+            allLines.push_back(line);
+        }
+
+        // 反转：最新的在前
+        std::vector<std::string> reversed;
+        for (int i = (int)allLines.size() - 1; i >= 0; i--)
+            reversed.push_back(allLines[i]);
+
+        int total = (int)reversed.size();
+        int start = (page - 1) * size;
+        int end = start + size;
+        if (end > total) end = total;
+
+        std::string data = "{\"total\":" + std::to_string(total) + ",\"page\":" + std::to_string(page) +
+                           ",\"size\":" + std::to_string(size) + ",\"data\":[";
+        for (int i = start; i < end; i++) {
+            if (i > start) data += ",";
+            std::vector<std::string> parts = split(reversed[i], '|');
+            data += "{";
+            data += "\"user\":\"" + jsonEscape(parts.size() > 0 ? parts[0] : "") + "\",";
+            data += "\"action\":\"" + jsonEscape(parts.size() > 1 ? parts[1] : "") + "\",";
+            data += "\"detail\":\"" + jsonEscape(parts.size() > 2 ? parts[2] : "") + "\",";
+            data += "\"time\":\"" + jsonEscape(parts.size() > 3 ? parts[3] : "") + "\"";
+            data += "}";
+        }
+        data += "]}";
+        return data;
     }
 
 }

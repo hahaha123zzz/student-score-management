@@ -204,74 +204,149 @@ static void seedFullData() {
     std::cout << "测试数据初始化完成（50名学生、3场考试、9个班级）" << std::endl;
 }
 
-static std::string route(const std::string& path, const std::string& body,
+// 从路径中提取ID (如 /api/users/admin → admin)
+static std::string extractId(const std::string& path, const std::string& prefix) {
+    if (path.size() > prefix.size() + 1 && path.substr(0, prefix.size()) == prefix)
+        return path.substr(prefix.size() + 1);
+    return "";
+}
+
+static std::string route(const std::string& method, const std::string& path, const std::string& body,
                           const std::string& queryString, const std::string& token) {
 
     // ===== 认证 =====
-    if (path == "/api/login") {
+    if (path == "/api/login" && method == "POST") {
         return handlers::login(body);
     }
-    if (path == "/api/change-password") {
+    if (path == "/api/change-password" && method == "POST") {
         return handlers::changePassword(token, body);
     }
-    if (path == "/api/auth/check") {
+    if (path == "/api/auth/check" && method == "GET") {
         return handlers::checkAuth(token);
     }
 
     // ===== 用户管理 =====
-    if (path == "/api/users") {
+    if (path == "/api/users" && method == "GET") {
         return handlers::getUsers();
+    }
+    if (path == "/api/users" && method == "POST") {
+        return handlers::addUser(body);
+    }
+    std::string uid = extractId(path, "/api/users");
+    if (!uid.empty() && method == "PUT") {
+        return handlers::updateUser(uid, body);
+    }
+    if (!uid.empty() && method == "DELETE") {
+        return handlers::deleteUser(uid);
     }
 
     // ===== 学生管理 =====
-    if (path == "/api/students") {
+    if (path == "/api/students" && method == "GET") {
         return handlers::getStudents(queryString);
+    }
+    if (path == "/api/students" && method == "POST") {
+        return handlers::addStudent(body);
+    }
+    std::string sid = extractId(path, "/api/students");
+    if (!sid.empty() && method == "PUT") {
+        return handlers::updateStudent(sid, body);
+    }
+    if (!sid.empty() && method == "DELETE") {
+        return handlers::deleteStudent(sid);
     }
 
     // ===== 班级管理 =====
-    if (path == "/api/classes") {
+    if (path == "/api/classes" && method == "GET") {
         return handlers::getClasses();
+    }
+    if (path == "/api/classes" && method == "POST") {
+        return handlers::addClass(body);
+    }
+    std::string cid = extractId(path, "/api/classes");
+    if (!cid.empty() && method == "PUT") {
+        return handlers::updateClass(cid, body);
+    }
+    if (!cid.empty() && method == "DELETE") {
+        return handlers::deleteClass(cid);
     }
 
     // ===== 科目管理 =====
-    if (path == "/api/subjects") {
+    if (path == "/api/subjects" && method == "GET") {
         return handlers::getSubjects();
+    }
+    if (path == "/api/subjects" && method == "POST") {
+        return handlers::addSubject(body);
     }
 
     // ===== 考试管理 =====
-    if (path == "/api/exams") {
+    if (path == "/api/exams" && method == "GET") {
         return handlers::getExams(queryString);
+    }
+    if (path == "/api/exams" && method == "POST") {
+        return handlers::addExam(body);
+    }
+    std::string eid = extractId(path, "/api/exams");
+    if (eid.find("/publish") != std::string::npos) {
+        return handlers::publishExam(eid.substr(0, eid.size() - 8));
+    }
+    if (eid.find("/retract") != std::string::npos) {
+        return handlers::retractExam(eid.substr(0, eid.size() - 8));
+    }
+    if (!eid.empty() && method == "PUT") {
+        return handlers::updateExam(eid, body);
+    }
+    if (!eid.empty() && method == "DELETE") {
+        return handlers::deleteExam(eid);
     }
 
     // ===== 成绩管理 =====
-    if (path == "/api/grades") {
+    if (path == "/api/grades" && method == "GET") {
         return handlers::getGrades(queryString);
     }
-    if (path == "/api/grades/export") {
+    if (path == "/api/grades" && method == "POST") {
+        return handlers::setGrades(body);
+    }
+    if (path == "/api/grades/import" && method == "POST") {
+        return handlers::importCSV(body);
+    }
+    if (path == "/api/grades/export" && method == "GET") {
         return handlers::exportCSV(queryString);
+    }
+    if (path == "/api/grades/makeup" && method == "POST") {
+        return handlers::markMakeup(body);
+    }
+    std::string gid = extractId(path, "/api/grades");
+    if (gid.find("/lock") != std::string::npos) {
+        return handlers::lockGrades(gid.substr(0, gid.size() - 5));
+    }
+    if (path.find("/api/grades/student/") == 0 && method == "GET") {
+        std::string stuid = path.substr(20);
+        return handlers::getStudentGrades(stuid);
     }
 
     // ===== 统计分析 =====
-    if (path == "/api/stats/rank") {
+    if (path == "/api/stats/rank" && method == "GET") {
         return stats::getRank(queryString);
     }
-    if (path == "/api/stats/class-compare") {
+    if (path == "/api/stats/class-compare" && method == "GET") {
         return stats::getClassCompare(queryString);
     }
-    if (path == "/api/stats/distribution") {
+    if (path == "/api/stats/distribution" && method == "GET") {
         return stats::getDistribution(queryString);
     }
-    if (path == "/api/stats/warnings") {
+    if (path == "/api/stats/warnings" && method == "GET") {
         return stats::getWarnings();
     }
-    if (path == "/api/stats/enrollment") {
+    if (path == "/api/stats/enrollment" && method == "GET") {
         return stats::getEnrollmentStats();
+    }
+    if (path.find("/api/stats/trend/") == 0 && method == "GET") {
+        std::string tid = path.substr(17);
+        return stats::getTrend(tid);
     }
 
     // ===== 日志 =====
-    if (path == "/api/logs") {
-        if (!handlers::isAdmin(token))
-            return utils::errorResponse("权限不足");
+    if (path == "/api/logs" && method == "GET") {
         return handlers::getLogs(queryString);
     }
 

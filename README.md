@@ -73,12 +73,6 @@ build\edugrade.exe
 cl /EHsc /utf-8 src\*.cpp /I include /Fe:edugrade.exe ws2_32.lib
 ```
 
-### 方式四：Linux/Mac（g++，需 pthread 替代 WinSock）
-
-```bash
-g++ -std=c++11 -o edugrade src/*.cpp -I include -lpthread
-```
-
 运行后在浏览器访问 **http://localhost:8080** 进入登录页。
 
 ---

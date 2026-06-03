@@ -7,6 +7,8 @@ namespace sort {
 
     void bubbleSort(std::vector<double>& arr);
 
+    void selectionSort(std::vector<double>& arr);
+
     void quickSort(std::vector<double>& arr, int left, int right);
     void quickSort(std::vector<double>& arr);
 

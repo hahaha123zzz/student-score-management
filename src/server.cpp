@@ -157,7 +157,7 @@ namespace server {
                 responseBody = "";
             } else {
                 if (g_handler) {
-                    responseBody = g_handler(path, body, queryString, token);
+                    responseBody = g_handler(method, path, body, queryString, token);
                 } else {
                     responseBody = "{\"success\":false,\"message\":\"no handler\",\"data\":{}}";
                 }

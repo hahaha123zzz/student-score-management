@@ -15,6 +15,21 @@ namespace sort {
         }
     }
 
+    void selectionSort(std::vector<double>& arr) {
+        int n = (int)arr.size();
+        for (int i = 0; i < n - 1; i++) {
+            int minIdx = i;
+            for (int j = i + 1; j < n; j++) {
+                if (arr[j] < arr[minIdx]) minIdx = j;
+            }
+            if (minIdx != i) {
+                double tmp = arr[i];
+                arr[i] = arr[minIdx];
+                arr[minIdx] = tmp;
+            }
+        }
+    }
+
     void quickSort(std::vector<double>& arr, int left, int right) {
         if (left >= right) return;
         double pivot = arr[left];
