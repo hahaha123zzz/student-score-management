@@ -1,154 +1,95 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>EduGrade - 登录 / 注册</title>
-<link rel="stylesheet" href="css/style.css?v=3">
-<style>
-.login-page{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0f0d1f 0%,#1e1b4b 30%,#312e81 60%,#4f46e5 100%);position:relative;overflow:hidden}
-.login-page::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 20% 50%,rgba(99,102,241,.15) 0%,transparent 50%),radial-gradient(circle at 80% 20%,rgba(129,140,248,.1) 0%,transparent 40%)}
-.login-card{background:rgba(255,255,255,.97);border-radius:20px;padding:36px 36px 30px;width:420px;max-width:90vw;box-shadow:0 25px 60px rgba(0,0,0,.25);position:relative;z-index:1;animation:modalIn .5s ease}
-.login-logo{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#4f46e5,#818cf8);display:inline-flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#fff;margin-bottom:16px;box-shadow:0 8px 20px rgba(79,70,229,.3)}
-.login-card h1{font-size:26px;font-weight:700;color:#1e1b4b;margin-bottom:4px;letter-spacing:-.3px}
-.login-card .sub{color:#64748b;font-size:13px;margin-bottom:20px}
-.tab-row{display:flex;gap:0;margin-bottom:24px;border-bottom:2px solid #e2e8f0}
-.tab-btn{flex:1;padding:10px;text-align:center;font-size:14px;font-weight:600;color:#94a3b8;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;transition:all .2s}
-.tab-btn.active{color:#4f46e5;border-bottom-color:#4f46e5}
-.form-panel{display:none}.form-panel.active{display:block;animation:fadeIn .3s}
-.field{margin-bottom:14px}.field label{display:block;margin-bottom:5px;font-size:12px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:.04em}
-.field input,.field select{width:100%;padding:11px 13px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;transition:all .2s;background:#f8fafc}
-.field input:focus,.field select:focus{border-color:#4f46e5;box-shadow:0 0 0 3px rgba(79,70,229,.1);background:#fff;outline:none}
-.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.btn-login{width:100%;padding:12px;border-radius:10px;background:linear-gradient(135deg,#4f46e5,#6366f1);color:#fff;font-size:15px;font-weight:600;border:none;cursor:pointer;transition:all .2s;letter-spacing:1px}
-.btn-login:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(79,70,229,.35)}
-.btn-login:disabled{opacity:.5;transform:none}
-.err-msg{color:#ef4444;font-size:12px;min-height:18px;text-align:center;margin-top:8px}
-.msg-ok{color:#10b981}
-.quick-section{margin-top:20px;padding-top:16px;border-top:1px solid #e2e8f0}
-.quick-section p{font-size:11px;color:#94a3b8;margin-bottom:10px}
-.quick-btns{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.quick-btns button{padding:8px;border-radius:8px;font-size:11px;font-weight:500;cursor:pointer;border:1.5px solid #e2e8f0;background:#fff;color:#475569;transition:all .2s}
-.quick-btns button:hover{border-color:#4f46e5;color:#4f46e5;background:#eef2ff}
-.quick-btns .role-dot{display:block;font-size:9px;color:#94a3b8;font-weight:400;margin-top:1px}
-.back-link{text-align:center;margin-top:14px;font-size:12px}
-.back-link a{color:#94a3b8;text-decoration:none}.back-link a:hover{color:#4f46e5}
-[data-theme=dark] .login-card{background:rgba(30,41,59,.97)}
-[data-theme=dark] .login-card h1{color:#f1f5f9}
-[data-theme=dark] .login-card .sub{color:#94a3b8}
-[data-theme=dark] .field label{color:#94a3b8}
-[data-theme=dark] .field input,.field select{background:#1e293b;border-color:#334155;color:#f1f5f9}
-[data-theme=dark] .tab-row{border-color:#334155}
-[data-theme=dark] .quick-section{border-top-color:#334155}
-[data-theme=dark] .quick-btns button{background:#1e293b;border-color:#334155;color:#94a3b8}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
-@keyframes modalIn{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
-@keyframes spin{to{transform:rotate(360deg)}}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>成绩管理系统 - 登录</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<div class="login-page">
-  <div class="login-card">
-    <div style="text-align:center">
-      <div class="login-logo">E</div>
-      <h1>EduGrade</h1>
-      <p class="sub">高中学生成绩管理系统</p>
-    </div>
-
-    <div class="tab-row">
-      <button class="tab-btn active" data-tab="login">登 录</button>
-      <button class="tab-btn" data-tab="register">注 册</button>
-    </div>
-
-    <!-- ====== LOGIN FORM ====== -->
-    <div class="form-panel active" id="panel-login">
-      <form id="f-login" autocomplete="off">
-        <div class="field"><label>用户名</label><input type="text" id="l-user" placeholder="输入用户名" autofocus></div>
-        <div class="field"><label>密码</label><input type="password" id="l-pass" placeholder="输入密码"></div>
-        <button type="submit" class="btn-login" id="l-btn"><span id="l-bt">登 录</span></button>
-      </form>
-      <p class="err-msg" id="l-err"></p>
-    </div>
-
-    <!-- ====== REGISTER FORM ====== -->
-    <div class="form-panel" id="panel-register">
-      <form id="f-register" autocomplete="off">
-        <div class="field"><label>用户名（学号）</label><input type="text" id="r-user" placeholder="如 S2025001" required></div>
-        <div class="field"><label>姓名</label><input type="text" id="r-name" placeholder="真实姓名" required></div>
-        <div class="field"><label>密码</label><input type="password" id="r-pass" placeholder="至少4位" required minlength="4"></div>
-        <div class="field"><label>确认密码</label><input type="password" id="r-pass2" placeholder="再次输入密码" required></div>
-        <div class="field-row">
-          <div class="field"><label>角色</label><select id="r-role"><option value="student">学生</option><option value="parent">家长</option></select></div>
-          <div class="field"><label>性别</label><select id="r-gender"><option value="">请选择</option><option value="男">男</option><option value="女">女</option></select></div>
+    <div class="login-container">
+        <h1>成绩管理系统</h1>
+        <p class="subtitle">高中学生成绩管理平台</p>
+        <form id="loginForm">
+            <div class="form-group">
+                <label>用户名</label>
+                <input type="text" id="username" placeholder="请输入用户名" required>
+            </div>
+            <div class="form-group">
+                <label>密码</label>
+                <input type="password" id="password" placeholder="请输入密码" required>
+            </div>
+            <div class="form-group">
+                <label>角色</label>
+                <select id="role">
+                    <option value="admin">管理员</option>
+                    <option value="student">学生</option>
+                </select>
+            </div>
+            <div id="errorMsg" class="error-msg" style="display:none;"></div>
+            <button type="submit" class="btn-primary">登 录</button>
+        </form>
+        <div class="hint">
+            <p>测试账号：admin / 123456（管理员）</p>
+            <p>测试账号：S2024001 / 123456（学生）</p>
         </div>
-        <div class="field"><label>班级（选填）</label><input type="text" id="r-class" placeholder="如 高一1班"></div>
-        <button type="submit" class="btn-login" id="r-btn"><span id="r-bt">注 册</span></button>
-      </form>
-      <p class="err-msg" id="r-err"></p>
     </div>
 
-    <div class="quick-section">
-      <p>快速测试账号</p>
-      <div class="quick-btns">
-        <button data-u="admin" data-p="123456">管理员<span class="role-dot">admin</span></button>
-        <button data-u="T001" data-p="123456">张老师<span class="role-dot">T001</span></button>
-        <button data-u="S2024001" data-p="123456">学生 张三<span class="role-dot">S2024001</span></button>
-        <button data-u="P2024001" data-p="123456">家长<span class="role-dot">P2024001</span></button>
-      </div>
-    </div>
-    <div class="back-link"><a href="/">← 返回首页</a></div>
-  </div>
-</div>
+    <script>
+        // 页面加载时检查是否已登录
+        const token = localStorage.getItem('token');
+        if (token) {
+            fetch('/api/auth/check', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    if (data.data.role === 'admin') {
+                        window.location.href = 'admin.html';
+                    } else {
+                        window.location.href = 'student.html';
+                    }
+                }
+            })
+            .catch(function() {});
+        }
 
-<script>
-(function(){
-var lf=document.getElementById('f-login'),lu=document.getElementById('l-user'),lp=document.getElementById('l-pass'),le=document.getElementById('l-err'),lbt=document.getElementById('l-bt'),lb=document.getElementById('l-btn');
-var rf=document.getElementById('f-register'),ru=document.getElementById('r-user'),rn=document.getElementById('r-name'),rp=document.getElementById('r-pass'),rp2=document.getElementById('r-pass2'),rr=document.getElementById('r-role'),rg=document.getElementById('r-gender'),rc=document.getElementById('r-class'),re=document.getElementById('r-err'),rbt=document.getElementById('r-bt'),rb=document.getElementById('r-btn');
+        // 登录表单提交
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const role = document.getElementById('role').value;
+            const errorMsg = document.getElementById('errorMsg');
 
-function sbtn(btn,txt,v){btn.disabled=v;if(v){txt.style.display='none';var sp=document.createElement('span');sp.id='_sp';sp.style.cssText='display:inline-block;width:18px;height:18px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-left:8px';btn.appendChild(sp)}else{txt.style.display='';var sp=document.getElementById('_sp');if(sp)sp.remove()}}
-function go(r){var m={admin:'admin.html',student:'student.html',parent:'parent.html'};window.location=m[r]||'admin.html'}
+            errorMsg.style.display = 'none';
 
-// Tabs
-document.querySelectorAll('.tab-btn').forEach(function(t){t.onclick=function(){
-  document.querySelectorAll('.tab-btn').forEach(function(x){x.classList.remove('active')});
-  document.querySelectorAll('.form-panel').forEach(function(x){x.classList.remove('active')});
-  this.classList.add('active');
-  document.getElementById('panel-'+this.dataset.tab).classList.add('active');
-  if(this.dataset.tab==='login')lu.focus();else ru.focus();
-  le.textContent='';re.textContent='';
-}});
-
-// Quick login
-document.querySelectorAll('[data-u]').forEach(function(x){x.onclick=function(){
-  document.querySelectorAll('.tab-btn').forEach(function(t){t.classList.remove('active');t.classList.add('active');if(t.dataset.tab==='login')t.classList.add('active');else t.classList.remove('active')});
-  document.querySelectorAll('.form-panel').forEach(function(p){p.classList.remove('active');if(p.id==='panel-login')p.classList.add('active')});
-  lu.value=this.dataset.u;lp.value=this.dataset.p;lf.dispatchEvent(new Event('submit'));
-}});
-
-// Login submit
-lf.onsubmit=function(e){e.preventDefault();le.textContent='';if(!lu.value.trim()||!lp.value){le.textContent='请输入用户名和密码';return}
-sbtn(lb,lbt,true);
-fetch('api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:lu.value.trim(),password:lp.value})})
-.then(function(r){return r.json()}).then(function(r){sbtn(lb,lbt,false);
-if(r&&r.success&&r.data&&r.data.token){localStorage.setItem('token',r.data.token);localStorage.setItem('user_id',r.data.user_id||'');localStorage.setItem('user_name',r.data.name||'');localStorage.setItem('user_role',r.data.role||'');go(r.data.role)}
-else{le.textContent=(r&&r.message)||'登录失败';le.className='err-msg'}}).catch(function(){sbtn(lb,lbt,false);le.textContent='无法连接服务器，请确认 edugrade.exe 已启动'});
-};
-
-// Register submit
-rf.onsubmit=function(e){e.preventDefault();re.textContent='';re.className='err-msg';
-if(!ru.value.trim()){re.textContent='请输入用户名';return}
-if(!rn.value.trim()){re.textContent='请输入姓名';return}
-if(!rp.value||rp.value.length<4){re.textContent='密码至少4位';return}
-if(rp.value!==rp2.value){re.textContent='两次密码不一致';return}
-sbtn(rb,rbt,true);
-fetch('api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:ru.value.trim(),password:rp.value,name:rn.value.trim(),role:rr.value,gender:rg.value,'class':rc.value.trim()})})
-.then(function(r){return r.json()}).then(function(r){sbtn(rb,rbt,false);
-if(r&&r.success){re.textContent='注册成功！请切换到登录Tab登录';re.className='err-msg msg-ok';
-// Switch to login after 1.5s
-setTimeout(function(){document.querySelector('[data-tab="login"]').click();lu.value=ru.value;lp.focus()},1500)}
-else{re.textContent=(r&&r.message)||'注册失败'}}).catch(function(){sbtn(rb,rbt,false);re.textContent='无法连接服务器'});
-};
-})();
-</script>
+            fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: username, password: password })
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    localStorage.setItem('token', data.data.token);
+                    localStorage.setItem('user', JSON.stringify(data.data));
+                    if (data.data.role === 'admin') {
+                        window.location.href = 'admin.html';
+                    } else {
+                        window.location.href = 'student.html';
+                    }
+                } else {
+                    errorMsg.textContent = data.message || '登录失败';
+                    errorMsg.style.display = 'block';
+                }
+            })
+            .catch(function() {
+                errorMsg.textContent = '网络错误，请稍后重试';
+                errorMsg.style.display = 'block';
+            });
+        });
+    </script>
 </body>
 </html>

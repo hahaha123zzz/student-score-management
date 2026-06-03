@@ -1,7 +1,7 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.10)
 project(EduGrade LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if(MSVC)
@@ -10,19 +10,20 @@ else()
     add_compile_options(-Wall -Wextra)
 endif()
 
-include_directories(${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/lib)
+include_directories(${CMAKE_SOURCE_DIR}/include)
 
-add_executable(edugrade
+set(SOURCES
     src/main.cpp
-    src/util.cpp
-    src/auth.cpp
-    src/student.cpp
-    src/exam.cpp
-    src/grade.cpp
+    src/utils.cpp
+    src/storage.cpp
+    src/models.cpp
+    src/handlers.cpp
     src/stats.cpp
-    src/extra.cpp
-    src/enhance.cpp
+    src/sort.cpp
+    src/server.cpp
 )
+
+add_executable(edugrade ${SOURCES})
 
 set_target_properties(edugrade PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
 
