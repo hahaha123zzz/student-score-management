@@ -1,6 +1,6 @@
 # 学生成绩管理系统
 
-> 一套用 C++ 从零构建的 Web 成绩管理系统，适合大一课程设计 / C++ 入门学习。
+> 一套用 C++11 纯标准库构建的 Web 成绩管理系统，适合大一C++课程设计。
 
 ---
 
@@ -21,7 +21,7 @@
 
 ## 项目简介
 
-这是一个**基于 C++ 编写的 HTTP 服务器**，提供完整的学生成绩管理功能。你可以通过浏览器访问网页界面，进行以下操作：
+这是一个**基于 C++11 编写的 HTTP 服务器**，提供完整的学生成绩管理功能。你可以通过浏览器访问网页界面，进行以下操作：
 
 - 学生档案管理（增删改查）
 - 班级管理
@@ -29,7 +29,7 @@
 - 考试管理（创建、发布、撤回、锁定）
 - 成绩录入（手动录入 + CSV 批量导入导出）
 - 补考成绩管理
-- 统计分析（排名、班级对比、分数段分布、趋势）
+- 统计分析（排名、班级对比、分数段分布）
 - 不及格预警
 - 操作日志
 
@@ -39,16 +39,15 @@
 
 ## 技术栈
 
-| 层     | 技术                             | 说明                   |
-| ------ | -------------------------------- | ---------------------- |
-| 后端   | C++17                            | 编程语言               |
-| HTTP   | cpp-httplib (httplib.h)          | 单头文件 HTTP 服务器库 |
-| JSON   | nlohmann/json (json.hpp)         | JSON 解析库            |
-| 存储   | 本地 JSON 文件 (`data/` 目录)    | 无需数据库             |
-| 前端   | 原生 HTML + CSS                  | 无需前端框架           |
-| 构建   | CMake（推荐）/ 直接编译          | 跨平台                 |
+| 层     | 技术                     | 说明                      |
+| ------ | ------------------------ | ------------------------- |
+| 语言   | C++11                    | 基础编程语言              |
+| HTTP   | WinSock2（自写）          | 用 Socket 构建 HTTP 服务  |
+| 存储   | CSV 文件（fstream）       | 纯文本表格格式，无需数据库 |
+| 前端   | 原生 HTML + CSS + JS     | 无需前端框架              |
+| 构建   | MSVC cl.exe / CMake      | Windows 平台              |
 
-**两个第三方库都是 header-only（只需头文件，不用单独编译）**，放进 `lib/` 目录就能用。
+**零第三方依赖**，所有功能用 C++ 标准库 + 系统自带的 WinSock2 实现。
 
 ---
 
@@ -56,36 +55,31 @@
 
 ### 方式一：直接运行（Windows）
 
-如果你已经有编译好的 `edugrade.exe`，直接双击运行，然后在浏览器打开 **http://localhost:8080**。
+直接双击 `edugrade.exe`，然后在浏览器打开 **http://localhost:8080**。
 
 ### 方式二：用 CMake 编译
 
 ```bash
-# 1. 创建构建目录
-mkdir build
-cd build
-
-# 2. 生成工程（Visual Studio / MinGW / GCC 都可以）
-cmake ..
-
-# 3. 编译
-cmake --build . --config Release
-
-# 4. 运行
-./Release/edugrade.exe
+cmake -B build
+cmake --build build
+build\edugrade.exe
 ```
 
-### 方式三：手动编译（适合小项目）
+### 方式三：手动编译（MSVC）
+
+打开 Visual Studio Developer Command Prompt，然后：
+
+```cmd
+cl /EHsc /utf-8 src\*.cpp /I include /Fe:edugrade.exe ws2_32.lib
+```
+
+### 方式四：Linux/Mac（g++，需 pthread 替代 WinSock）
 
 ```bash
-# Windows (MSVC)
-cl /std:c++17 /EHsc /Fe:edugrade.exe src/*.cpp /I include /I lib ws2_32.lib
-
-# Linux / Mac
-g++ -std=c++17 -o edugrade src/*.cpp -I include -I lib -lpthread
+g++ -std=c++11 -o edugrade src/*.cpp -I include -lpthread
 ```
 
-运行后在浏览器访问 **http://localhost:8080/login.html** 进入登录页。
+运行后在浏览器访问 **http://localhost:8080** 进入登录页。
 
 ---
 
@@ -93,26 +87,24 @@ g++ -std=c++17 -o edugrade src/*.cpp -I include -I lib -lpthread
 
 ```
 c++成绩管理系统/
-├── lib/                          # 第三方库（只用头文件）
-│   ├── httplib.h                 # cpp-httplib：HTTP 服务器库
-│   └── json.hpp                  # nlohmann/json：JSON 解析库
-│
 ├── include/                      # 头文件（函数声明）
-│   ├── util.h                    # 工具模块
-│   ├── auth.h                    # 认证模块
-│   ├── student.h                 # 学生管理模块
-│   ├── exam.h                    # 考试管理模块
-│   ├── grade.h                   # 成绩管理模块
-│   └── stats.h                   # 统计分析模块
+│   ├── utils.h                   # 工具函数（哈希、Token、JSON构建、字符串）
+│   ├── storage.h                 # CSV 文件读写（fstream）
+│   ├── models.h                  # OOP 类定义（Person/Admin/Student/Exam/Grade）
+│   ├── handlers.h                # 所有 API 业务处理函数
+│   ├── stats.h                   # 统计分析（排名、对比、分布）
+│   ├── sort.h                    # 手写排序算法（冒泡、快速排序）
+│   └── server.h                  # WinSock HTTP 服务端
 │
 ├── src/                          # 源文件（函数实现）
-│   ├── main.cpp                  # 程序入口 + HTTP 路由注册
-│   ├── util.cpp                  # 工具函数实现
-│   ├── auth.cpp                  # 认证功能实现
-│   ├── student.cpp               # 学生/班级管理实现
-│   ├── exam.cpp                  # 考试管理实现
-│   ├── grade.cpp                 # 成绩管理实现
-│   └── stats.cpp                 # 统计分析实现
+│   ├── main.cpp                  # 程序入口 + 种子数据 + 路由分发
+│   ├── utils.cpp                 # 工具函数实现
+│   ├── storage.cpp               # CSV 读写实现
+│   ├── models.cpp                # 类的实现 + CSV 序列化
+│   ├── handlers.cpp              # 所有 API 处理逻辑
+│   ├── stats.cpp                 # 统计分析实现
+│   ├── sort.cpp                  # 排序算法实现
+│   └── server.cpp                # WinSock HTTP 服务实现
 │
 ├── web/                          # 前端页面
 │   ├── login.html                # 登录页
@@ -120,14 +112,14 @@ c++成绩管理系统/
 │   ├── student.html              # 学生中心
 │   └── css/style.css             # 样式表
 │
-├── data/                         # 数据文件（运行时生成）
-│   ├── users.json                # 用户账号
-│   ├── students.json             # 学生档案
-│   ├── classes.json              # 班级信息
-│   ├── subjects.json             # 科目设置
-│   ├── exams.json                # 考试记录
-│   ├── grades.json               # 成绩数据
-│   └── logs.json                 # 操作日志
+├── data/                         # 数据文件（运行时自动生成）
+│   ├── users.csv                 # 用户账号
+│   ├── students.csv              # 学生档案
+│   ├── classes.csv               # 班级信息
+│   ├── subjects.csv              # 科目设置
+│   ├── exams.csv                 # 考试记录
+│   ├── grades.csv                # 成绩数据
+│   └── logs.txt                  # 操作日志
 │
 ├── CMakeLists.txt                # CMake 构建配置
 └── README.md                     # 你正在看的这个文件
@@ -156,90 +148,99 @@ Token 是用户登录后服务器给的一张"临时通行证"。把它想象成
 2. 之后每次进房间（访问功能），刷一下房卡就行了，不用重新登记
 3. 房卡过期了（重启服务器），就要重新登记
 
-### 4. JSON 是什么？
+### 4. CSV 是什么？
 
-JSON 是一种数据格式，和 XML 类似但更简洁。它看起来像这样：
+CSV (Comma-Separated Values) 是一种纯文本表格格式。每行一条记录，用逗号分隔字段：
 
-```json
-{
-    "name": "张三",
-    "age": 16,
-    "scores": { "语文": 120, "数学": 135 }
-}
+```csv
+学号,姓名,班级,性别
+S2024001,张三,高一1班,男
+S2024002,李四,高一1班,女
 ```
 
-所有数据（学生、成绩、用户等）都以 JSON 文件格式存储在 `data/` 目录下。
+可以直接用记事本或 Excel 打开查看和编辑。所有数据（学生、成绩、用户等）都以 CSV 文件格式存储在 `data/` 目录下。
 
-### 5. 为什么用 JSON 文件而不是数据库？
+### 5. 为什么用 CSV 文件而不是数据库？
 
 对于课程设计级别的项目：
-- JSON 文件**简单直观**，可以直接用记事本打开查看
+- CSV 文件**简单直观**，可以直接用记事本打开查看
 - 不需要安装和配置数据库
 - 不需要学习 SQL 语言
 - 数据量小（几百个学生）时性能完全够用
-
-在实际项目中，会用 MySQL / SQLite / MongoDB 等数据库替换这种方式。
+- 与课程要求的 fstream 文件操作直接对应
 
 ### 6. 哈希是什么？为什么要哈希存密码？
 
-哈希就像"数字指纹"：`hasher("123456")` 永远等于 `"150a41"`，但你无法从 `"150a41"` 反推出原始密码是 `123456`。
+哈希就像"数字指纹"：`hashPassword("123456")` 永远等于同一个值，但你无法从哈希值反推出原始密码是 `123456`。
 
-这样即使有人拿到了 users.json 文件，也看不到真实密码。
+这样即使有人拿到了 users.csv 文件，也看不到真实密码。
 
 ---
 
 ## 代码架构
 
-整个项目分为 **6 个模块**，每个模块一个头文件 + 一个源文件：
+整个项目分为 **7 个模块**，每个模块一个头文件 + 一个源文件：
 
 ```
-main.cpp  ← 入口，注册所有路由
-  ├── util.h / util.cpp        ← 基础工具（其他模块都依赖它）
-  ├── auth.h / auth.cpp        ← 登录认证 + 用户管理
-  ├── student.h / student.cpp  ← 学生 + 班级 + 科目管理
-  ├── exam.h / exam.cpp        ← 考试管理
-  ├── grade.h / grade.cpp      ← 成绩录入查询导入导出
-  └── stats.h / stats.cpp      ← 统计分析
+main.cpp  ← 入口，种子数据生成，路由分发
+  ├── utils.h / utils.cpp         ← 基础工具（其他模块都依赖它）
+  │     ├── storage.h / storage.cpp ← CSV 文件读写
+  │     ├── models.h / models.cpp   ← OOP 类定义
+  │     ├── handlers.h / handlers.cpp ← API 业务逻辑
+  │     ├── stats.h / stats.cpp     ← 统计分析（调用 sort）
+  │     ├── sort.h / sort.cpp       ← 手写排序算法
+  │     └── server.h / server.cpp   ← WinSock HTTP 服务
 ```
 
 ### 模块依赖关系
 
 ```
-main.cpp ──→ student ──→ util
-         ──→ auth    ──→ util
-         ──→ exam    ──→ util
-         ──→ grade   ──→ util
-         ──→ stats   ──→ util
+main.cpp ──→ handlers ──→ storage ──→ utils
+         ──→ stats    ──→ storage, sort ──→ utils
+         ──→ server   ──→ (WinSock2)
 ```
 
-**util 模块是基础层**，所有其他模块都调用它来读写文件、记录日志、生成响应。
+### OOP 类继承体系
+
+```
+        Person（基类）
+        ├── id, name, password, role
+        ├── verifyPassword()
+        └── toCSV() / fromCSV()
+              │
+    ┌─────────┴─────────┐
+    │                   │
+  Admin              Student
+  (管理员)            ├── className, birthday, gender
+                     └── getClassName() / getClass() ...
+
+  Exam                 Cls（班级）
+  ├── id, name         ├── id, name, grade
+  ├── date, status
+  ├── subjects[]       Grade（成绩）
+  ├── publish()        ├── studentId, examId
+  └── lock()           ├── scores[], isMakeup
+                       └── calcTotal() / calcAverage()
+```
 
 ### 程序的执行流程
 
 ```
 main() 被调用
   │
-  ├─ ① seedData()         → 检查并生成测试数据
+  ├─ ① seedFullData()        → 检查并生成测试数据（CSV 文件）
   │
-  ├─ ② 创建 Server 对象   → 初始化 HTTP 服务器
+  ├─ ② server::setRouteHandler(route)  → 注册路由分发函数
   │
-  ├─ ③ 注册路由           → 告诉服务器"什么 URL 调什么函数"
-  │     ├─ POST /api/login         → auth::login()
-  │     ├─ GET  /api/students      → student::getStudents()
-  │     ├─ POST /api/grades        → grade::setGrades()
-  │     └─ ... （共约 30 个路由）
-  │
-  ├─ ④ svr.set_mount_point("/", web/)  → 设置前端文件目录
-  │
-  └─ ⑤ svr.listen("0.0.0.0", 8080)    → 开始监听，等待请求
-       │
-       └─ 用户访问 http://localhost:8080/login.html
-            └─ 服务器返回 web/login.html 的内容
-            └─ 用户填写表单，点登录
-            └─ 浏览器 POST /api/login
-            └─ 服务器调用 auth::login()
-            └─ 返回 Token 给浏览器
-            └─ 浏览器存下 Token，后续请求都带着它
+  └─ ③ server::start(webDir) → 启动 WinSock HTTP 服务
+        │
+        └─ 用户访问 http://localhost:8080
+             └─ 服务器返回 web/login.html
+             └─ 用户填写表单，点登录
+             └─ 浏览器 POST /api/login
+             └─ 服务器调用 handlers::login()
+             └─ 返回 Token 给浏览器
+             └─ 浏览器存下 Token，后续请求都带着它
 ```
 
 ### 一个请求的完整处理过程
@@ -250,21 +251,25 @@ main() 被调用
 浏览器 GET /api/students?page=1&size=20
     │
     ▼
-[httplib 库收到请求]
+[server.cpp 收到 HTTP 请求]
     │
     ▼
-[匹配路由]  → GET /api/students
+[解析请求行] → method=GET, path=/api/students, queryString=page=1&size=20
     │
     ▼
-[执行 lambda]  {
-    addCors(res);                              ← 加跨域头
-    parseParams(req, page, size);               ← 解析 URL 参数
-    student::getStudents(search, cls, 1, 20)    ← 调用业务逻辑
-        ├── util::readJSON("students.json")     ← 读文件
-        ├── 筛选 + 分页                          ← 处理数据
-        └── return json 结果                     ← 返回
-    res.set_content(result.dump(), "application/json")  ← 发送响应
-}
+[main.cpp route() 函数分发]
+    if (path == "/api/students")
+        → handlers::getStudents(queryString)
+    │
+    ▼
+[handlers::getStudents]
+    ├── storage::getStudents()           ← 读 students.csv
+    ├── 遍历筛选（按姓名/班级）            ← 业务逻辑
+    ├── 计算分页                          ← 业务逻辑
+    └── return JSON 字符串                ← 返回
+    │
+    ▼
+[server.cpp 构建 HTTP 响应 + CORS 头，发送回浏览器]
     │
     ▼
 [浏览器收到 JSON 数据，渲染成表格]
@@ -288,58 +293,58 @@ main() 被调用
 
 | 方法   | URL               | 说明         | 权限   |
 | ------ | ----------------- | ------------ | ------ |
-| GET    | `/api/users`      | 用户列表     | 管理员 |
-| POST   | `/api/users`      | 添加用户     | 管理员 |
-| PUT    | `/api/users/{id}` | 修改用户     | 管理员 |
-| DELETE | `/api/users/{id}` | 删除用户     | 管理员 |
+| GET    | `/api/users`      | 用户列表     | 所有人 |
+| POST   | `/api/users`      | 添加用户     | 所有人 |
+| PUT    | `/api/users/{id}` | 修改用户     | 所有人 |
+| DELETE | `/api/users/{id}` | 删除用户     | 所有人 |
 
 ### 学生管理
 
 | 方法   | URL                  | 说明             | 权限   |
 | ------ | -------------------- | ---------------- | ------ |
 | GET    | `/api/students`      | 学生列表（分页） | 所有人 |
-| POST   | `/api/students`      | 添加学生         | 管理员 |
-| PUT    | `/api/students/{id}` | 修改学生         | 管理员 |
-| DELETE | `/api/students/{id}` | 删除学生         | 管理员 |
+| POST   | `/api/students`      | 添加学生         | 所有人 |
+| PUT    | `/api/students/{id}` | 修改学生         | 所有人 |
+| DELETE | `/api/students/{id}` | 删除学生         | 所有人 |
 
 ### 班级管理
 
 | 方法   | URL                 | 说明     | 权限   |
 | ------ | ------------------- | -------- | ------ |
 | GET    | `/api/classes`      | 班级列表 | 所有人 |
-| POST   | `/api/classes`      | 添加班级 | 管理员 |
-| PUT    | `/api/classes/{id}` | 修改班级 | 管理员 |
-| DELETE | `/api/classes/{id}` | 删除班级 | 管理员 |
+| POST   | `/api/classes`      | 添加班级 | 所有人 |
+| PUT    | `/api/classes/{id}` | 修改班级 | 所有人 |
+| DELETE | `/api/classes/{id}` | 删除班级 | 所有人 |
 
 ### 科目管理
 
 | 方法 | URL              | 说明     | 权限   |
 | ---- | ---------------- | -------- | ------ |
 | GET  | `/api/subjects`  | 科目列表 | 所有人 |
-| POST | `/api/subjects`  | 添加科目 | 管理员 |
+| POST | `/api/subjects`  | 添加科目 | 所有人 |
 
 ### 考试管理
 
 | 方法   | URL                       | 说明       | 权限   |
 | ------ | ------------------------- | ---------- | ------ |
 | GET    | `/api/exams`              | 考试列表   | 所有人 |
-| POST   | `/api/exams`              | 创建考试   | 管理员 |
-| PUT    | `/api/exams/{id}`         | 修改考试   | 管理员 |
-| DELETE | `/api/exams/{id}`         | 删除考试   | 管理员 |
-| PUT    | `/api/exams/{id}/publish` | 发布成绩   | 管理员 |
-| PUT    | `/api/exams/{id}/retract` | 撤回成绩   | 管理员 |
+| POST   | `/api/exams`              | 创建考试   | 所有人 |
+| PUT    | `/api/exams/{id}`         | 修改考试   | 所有人 |
+| DELETE | `/api/exams/{id}`         | 删除考试   | 所有人 |
+| PUT    | `/api/exams/{id}/publish` | 发布成绩   | 所有人 |
+| PUT    | `/api/exams/{id}/retract` | 撤回成绩   | 所有人 |
 
 ### 成绩管理
 
 | 方法   | URL                         | 说明             | 权限   |
 | ------ | --------------------------- | ---------------- | ------ |
-| POST   | `/api/grades`               | 录入/更新成绩    | 管理员 |
-| POST   | `/api/grades/import`        | CSV 批量导入成绩 | 管理员 |
+| POST   | `/api/grades`               | 录入/更新成绩    | 所有人 |
+| POST   | `/api/grades/import`        | CSV 批量导入成绩 | 所有人 |
 | GET    | `/api/grades/export`        | CSV 导出成绩     | 所有人 |
-| PUT    | `/api/grades/{id}/lock`     | 锁定成绩         | 管理员 |
+| PUT    | `/api/grades/{id}/lock`     | 锁定成绩         | 所有人 |
 | GET    | `/api/grades`               | 查询成绩         | 所有人 |
 | GET    | `/api/grades/student/{id}`  | 学生历史成绩     | 所有人 |
-| POST   | `/api/grades/makeup`        | 补考成绩录入     | 管理员 |
+| POST   | `/api/grades/makeup`        | 补考成绩录入     | 所有人 |
 
 ### 统计分析
 
@@ -354,9 +359,9 @@ main() 被调用
 
 ### 其他
 
-| 方法 | URL        | 说明               | 权限   |
-| ---- | ---------- | ------------------ | ------ |
-| GET  | `/api/logs` | 操作日志（需要管理员）| 管理员 |
+| 方法 | URL        | 说明     | 权限   |
+| ---- | ---------- | -------- | ------ |
+| GET  | `/api/logs` | 操作日志 | 所有人 |
 
 ---
 
@@ -378,101 +383,109 @@ main() 被调用
 
 ## 模块详解
 
-### util（工具模块）— `util.h` / `util.cpp`
+### utils（工具模块）— `utils.h` / `utils.cpp`
 
 **定位：** 最底层的工具箱，所有模块都依赖它。
 
 **主要功能：**
-- `readJSON / writeJSON` — JSON 文件的读写（自动创建目录）
-- `hasher` — DJB2 哈希算法，用于密码加密存储
-- `genToken` — 生成 32 位随机 Token
-- `logAction / getLogs` — 操作日志的记录和查询
+- `hashPassword` — DJB2 哈希算法，用于密码加密存储
+- `generateToken` — 生成 16 位随机 Token（使用 rand()）
+- `storeToken / isTokenValid / getUserIdByToken` — Token 内存存储与验证
+- `logAction` — 操作日志记录到 logs.txt
 - `getCurrentTime` — 获取格式化时间字符串
-- `round2` — 保留两位小数
-- `gradeToRank` — 分数 → 等级（A/B/C/D/F）+ GPA
-- `jsonResponse / errorResponse` — 统一 API 响应格式
-- `extractToken` — 从 HTTP 请求头提取 Token
+- `split / join / toLower / trim` — 字符串处理工具
+- `round2 / gradeToLetter / gradeToGPA` — 数学工具
+- `jsonResponse / errorResponse` — 手动拼接 JSON 响应字符串
+- `getQueryParam` — URL 查询参数解析
 
-### auth（认证模块）— `auth.h` / `auth.cpp`
+### storage（数据存储模块）— `storage.h` / `storage.cpp`
 
-**定位：** 管理用户身份和权限。
-
-**主要功能：**
-- `login` — 验证用户名密码，返回 Token
-- `checkAuth` — 验证 Token 有效性
-- `changePassword` — 修改密码
-- `getUsers / addUser / deleteUser / updateUser` — 用户 CRUD
-
-**核心数据结构：** `sessions`（内存中的 Token → 用户映射表）
-
-**注意：** 重启服务器后 session 会清空，用户需要重新登录。
-
-### student（学生管理模块）— `student.h` / `student.cpp`
-
-**定位：** 管理学生、班级、科目的基础数据。
+**定位：** 使用 fstream 读写 CSV 文件，每类数据一个 CSV 文件。
 
 **主要功能：**
-- 学生 CRUD（支持姓名/学号搜索 + 班级筛选 + 分页）
-- 班级 CRUD
-- 科目管理
-- 入学统计（每个班级多少人）
+- `readCSV / writeCSV` — 底层 CSV 文件读写
+- `splitCSV` — CSV 行按逗号解析
+- `getUsers / saveUsers` — 用户数据
+- `getStudents / saveStudents` — 学生数据
+- `getClasses / saveClasses` — 班级数据
+- `getSubjects / saveSubjects` — 科目数据
+- `getExams / saveExams` — 考试数据
+- `getGrades / saveGrades` — 成绩数据
 
-### exam（考试管理模块）— `exam.h` / `exam.cpp`
+**CSV 多值字段设计：** 考试科目和成绩分数用 `|` 分隔：
 
-**定位：** 管理考试的生命周期。
-
-**状态机：**
 ```
-draft ──publish──→ published ──retract──→ draft
-  │                    │
-  └──lock──→ locked    └──lock──→ locked
+exams.csv  subjects 列:  语文|数学|英语|物理|化学
+grades.csv scores 列:    120|135|110|85|92
 ```
 
-- `draft`：草稿，只有管理员能看到
-- `published`：已发布，学生可以在自己页面看到成绩
-- `locked`：已锁定，不能修改、不能发布、不能撤回（最终封存）
+### models（数据模型模块）— `models.h` / `models.cpp`
 
-### grade（成绩管理模块）— `grade.h` / `grade.cpp`
+**定位：** 定义 OOP 类，体现封装和继承。
 
-**定位：** 成绩的核心增删改查。
+**类体系：**
+- `Person`（基类）→ `Admin`（管理员）、`Student`（学生）— 继承关系
+- `Cls`（班级）— 独立类
+- `Subject`（科目）— 独立类
+- `Exam`（考试）— 含状态机 draft/published/locked
+- `Grade`（成绩）— 含加权总分计算
+
+每个类提供 `toCSV()` / `fromCSV()` 方法完成与 CSV 文件的双向转换。
+
+### handlers（业务逻辑模块）— `handlers.h` / `handlers.cpp`
+
+**定位：** 实现所有 API 的业务逻辑，是系统核心。
 
 **主要功能：**
-- `setGrades` — 录入/覆盖成绩（自动判断新增还是更新）
-- `importCSV` — 批量导入（解析 CSV 格式）
-- `exportCSV` — 批量导出（生成 CSV 格式）
-- `lockGrades` — 锁定成绩
-- `getGrades` — 查询（支持按考试、按学生筛选）
-- `markMakeup` — 补考成绩标注
+- 认证：`login`、`changePassword`、`checkAuth`、`isAdmin`
+- 用户 CRUD：`getUsers`、`addUser`、`updateUser`、`deleteUser`
+- 学生 CRUD：`getStudents`（分页+搜索）、`addStudent`、`updateStudent`、`deleteStudent`
+- 班级 CRUD：`getClasses`、`addClass`、`updateClass`、`deleteClass`
+- 科目管理：`getSubjects`、`addSubject`
+- 考试管理：`getExams`、`addExam`、`updateExam`、`deleteExam`、`publishExam`、`retractExam`
+- 成绩管理：`setGrades`、`importCSV`、`exportCSV`、`lockGrades`、`getGrades`、`markMakeup`
 
-**CSV 导入格式示例：**
-```csv
-学号,姓名,语文,数学,英语
-S2024001,张三,120,135,110
-S2024002,李四,115,128,105
-```
+### sort（排序算法模块）— `sort.h` / `sort.cpp`
+
+**定位：** 手写排序算法，满足课程对算法的要求。
+
+**实现的算法：**
+- `bubbleSort` — 冒泡排序（O(n²)，用于教学演示）
+- `quickSort` — 快速排序（O(n log n)，用于实际排序）
+- `quickSortWithIndex` — 带索引的快速排序（用于排名，分数排序同时记录原始位置）
 
 ### stats（统计分析模块）— `stats.h` / `stats.cpp`
 
 **定位：** 对成绩数据进行深度分析。
 
 **主要功能：**
-- `getRank` — 排名（总分/单科，全年级/班级内）
-- `getClassCompare` — 班级对比（平均分、优秀率、及格率、中位数等）
+- `getRank` — 排名（总分/单科，全年级/班级内），使用手写快速排序
+- `getClassCompare` — 班级对比（平均分、优秀率、良好率、及格率、最高/最低/中位数）
 - `getDistribution` — 分数段分布（<60, 60-69, 70-79, 80-89, 90-100）
 - `getTrend` — 学生成绩趋势（多场考试的变化）
 - `getWarnings` — 不及格预警
-- `convertGrade` — 加权总分换算
+- `getEnrollmentStats` — 各班级人数统计
+
+### server（HTTP 服务模块）— `server.h` / `server.cpp`
+
+**定位：** 基于 WinSock2 的手写 HTTP 服务器。
+
+**实现要点：**
+- `WSAStartup → socket → bind → listen → accept` 标准 Socket 流程
+- 解析 HTTP 请求行、请求头（Authorization 提取 Token）、请求体
+- 自动区分静态文件请求（返回 HTML/CSS/JS）和 API 请求（调用 handler）
+- 添加 CORS 跨域响应头
+- 单线程阻塞模式，简单易懂
 
 ### main.cpp（程序入口）
 
 **定位：** 程序的"大脑"，负责串联一切。
 
 **做的事情：**
-1. `seedData()` — 初始化测试数据
-2. 创建 HTTP 服务器
-3. 注册 ~30 个 API 路由
-4. 设置前端静态文件目录
-5. 启动服务器监听端口 8080
+1. `seedFullData()` — 初始化测试数据（生成 CSV 文件）
+2. `route()` — 路由分发函数，用 if-else 匹配 URL
+3. `server::setRouteHandler(route)` — 注册路由
+4. `server::start(webDir)` — 启动 WinSock 服务器监听 8080 端口
 
 ---
 
@@ -480,15 +493,11 @@ S2024002,李四,115,128,105
 
 ### Q: 怎么改端口号？
 
-在 `src/main.cpp` 最后一行，把 `8080` 改成你想要的端口号：
-
-```cpp
-svr.listen("0.0.0.0", 8080);  // 改成 3000 或其他
-```
+在 `src/server.cpp` 中找到 `htons(8080)`，把 `8080` 改成你想要的端口号，重新编译。
 
 ### Q: 数据保存在哪里？
 
-所有数据都保存在 `data/` 目录下的 JSON 文件中。可以直接用记事本打开查看。
+所有数据都保存在 `data/` 目录下的 CSV 文件中。可以直接用记事本或 Excel 打开查看。
 
 ### Q: 怎么重置所有数据？
 
@@ -498,28 +507,24 @@ svr.listen("0.0.0.0", 8080);  // 改成 3000 或其他
 
 密码存储的是哈希值（数字指纹），不是明文。这是安全设计——即使数据文件泄露，也无法知道真实密码。
 
-### Q: 程序支持多个用户同时访问吗？
-
-是的，服务器会为每个请求创建线程处理，支持多人同时操作。
-
 ### Q: 前端页面怎么自己修改？
 
-前端页面在 `web/` 目录下，是纯 HTML + CSS，可以直接编辑。修改后刷新浏览器即可看到效果，不需要重新编译。
+前端页面在 `web/` 目录下，是纯 HTML + CSS + JavaScript，可以直接编辑。修改后刷新浏览器即可看到效果，不需要重新编译。
 
 ### Q: 怎么添加新功能？
 
 以添加一个"导出排名为 Excel"的功能为例：
-1. 在 `src/stats.cpp` 中写一个新函数（如 `exportRankExcel`）
-2. 在 `include/stats.h` 中声明它
-3. 在 `src/main.cpp` 中注册一个新的路由
+1. 在 `src/handlers.cpp` 中写一个新函数（如 `exportRankExcel`）
+2. 在 `include/handlers.h` 中声明它
+3. 在 `src/main.cpp` 的 `route()` 函数中添加一个新的 if-else 分支
 4. 重新编译即可
 
 ### Q: 编译报错怎么办？
 
 常见问题：
-- Windows 上缺少 `ws2_32.lib`：CMakeLists.txt 已经配置好了，用 CMake 编译即可
-- 找不到 `httplib.h` 或 `json.hpp`：确认 `lib/` 目录下这两个文件存在
-- C++17 特性不支持：确认编译器版本够新（VS2017+、GCC 8+）
+- 找不到 `<winsock2.h>`：确认在 Windows 上使用 MSVC，并链接 `ws2_32.lib`
+- `_access` / `_mkdir` 未定义：确认在 Windows 上编译（这些是 Windows 特有 API）
+- C++11 特性不支持：确认编译器版本（VS2013+、GCC 4.8+）
 
 ---
 
@@ -527,10 +532,12 @@ svr.listen("0.0.0.0", 8080);  // 改成 3000 或其他
 
 如果你是 C++ 初学者，建议按以下顺序阅读理解代码：
 
-1. **先看 `util.h` / `util.cpp`** — 理解基础工具函数的写法
-2. **再看 `auth.h` / `auth.cpp`** — 理解登录认证流程和 Token 机制
-3. **然后看 `student.h` / `student.cpp`** — 理解 CRUD 的标准写法
-4. **接着看 `main.cpp`** — 理解 HTTP 路由注册和服务器启动
-5. **最后看 `stats.cpp`** — 理解较复杂的统计算法
+1. **先看 `utils.h` / `utils.cpp`** — 理解基础工具函数的写法（哈希、字符串处理、JSON字符串拼接）
+2. **再看 `sort.h` / `sort.cpp`** — 理解手写的冒泡排序和快速排序算法
+3. **然后看 `storage.h` / `storage.cpp`** — 理解 fstream 文件读写和 CSV 格式解析
+4. **接着看 `models.h` / `models.cpp`** — 理解 OOP 的类定义、封装、继承
+5. **再接着看 `handlers.h` / `handlers.cpp`** — 理解真实的 CRUD 业务逻辑怎么写
+6. **然后看 `server.h` / `server.cpp`** — 理解 WinSock 网络编程（Socket、bind、listen、accept）
+7. **最后看 `main.cpp`** — 理解程序入口、路由分发、种子数据生成
 
-每个文件都已经添加了非常详细的注释，建议一边看代码一边看注释，遇到不理解的 C++ 语法可以查阅课本或搜索引擎。
+每个文件都使用初学者友好的写法：没有 lambda 表达式、没有模板、没有智能指针、没有虚函数。
