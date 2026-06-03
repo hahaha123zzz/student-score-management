@@ -37,29 +37,29 @@ namespace utils {
 
     // ===== Token管理 (内存存储) =====
 
-    static std::map<std::string, int> tokenToUserId;
-    static std::map<int, std::string> userRoles;
+    static std::map<std::string, std::string> tokenToUserId;
+    static std::map<std::string, std::string> userRoles;
 
-    int getUserIdByToken(const std::string& token) {
+    std::string getUserIdByToken(const std::string& token) {
         if (tokenToUserId.count(token)) return tokenToUserId[token];
-        return -1;
+        return "-1";
     }
 
-    void storeToken(const std::string& token, int userId) {
+    void storeToken(const std::string& token, const std::string& userId) {
         tokenToUserId[token] = userId;
     }
 
     bool isTokenValid(const std::string& token) {
-        return tokenToUserId.count(token) > 0;
+        return tokenToUserId.count(token) > 0 && tokenToUserId[token] != "-1";
     }
 
     std::string getUserRoleByToken(const std::string& token) {
-        int uid = getUserIdByToken(token);
-        if (uid >= 0 && userRoles.count(uid)) return userRoles[uid];
+        std::string uid = getUserIdByToken(token);
+        if (uid != "-1" && userRoles.count(uid)) return userRoles[uid];
         return "";
     }
 
-    void setUserRole(int userId, const std::string& role) {
+    void setUserRole(const std::string& userId, const std::string& role) {
         userRoles[userId] = role;
     }
 

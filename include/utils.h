@@ -17,11 +17,11 @@ namespace utils {
 
     // Token管理
     std::string generateToken();
-    int getUserIdByToken(const std::string& token);
-    void storeToken(const std::string& token, int userId);
+    std::string getUserIdByToken(const std::string& token);
+    void storeToken(const std::string& token, const std::string& userId);
     bool isTokenValid(const std::string& token);
     std::string getUserRoleByToken(const std::string& token);
-    void setUserRole(int userId, const std::string& role);
+    void setUserRole(const std::string& userId, const std::string& role);
 
     // 日志
     void logAction(const std::string& userId, const std::string& action, const std::string& detail);
