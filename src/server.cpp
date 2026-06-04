@@ -232,6 +232,7 @@ namespace server {
         }
 
         std::cout << "成绩管理系统已启动，请打开浏览器访问 http://localhost:8080" << std::endl;
+        std::cout << "默认账号: admin, 密码: 123456" << std::endl;
 
         // 接收缓冲区：32KB，用于存放客户端发来的 HTTP 请求
         char recvBuf[32768];
@@ -248,17 +249,38 @@ namespace server {
             if (clientSocket == INVALID_SOCKET) continue;
 
             // ----- recv：接收客户端发来的数据（"听对方说话"）-----
-            // recvBuf：存放数据的缓冲区
-            // sizeof(recvBuf) - 1：留一个字节放字符串结束符
-            // 返回值 bytes 是实际收到的字节数
-            // 返回 -1（SOCKET_ERROR）或 0 表示连接中断
+            // TCP 是流协议，一次 recv() 可能只收到部分数据（头部和体可能分两次到达）
+            // 因此需要循环接收，直到收到完整请求
             int bytes = recv(clientSocket, recvBuf, sizeof(recvBuf) - 1, 0);
-            if (bytes <= 0) {
-                closesocket(clientSocket);
-                continue;
+            if (bytes <= 0) { closesocket(clientSocket); continue; }
+            recvBuf[bytes] = '\0';
+            std::string rawRequest(recvBuf, bytes);
+
+            // 检查请求体是否接收完整：找到 Content-Length 头部
+            size_t clPos = rawRequest.find("Content-Length: ");
+            if (clPos != std::string::npos) {
+                clPos += 16; // 跳过 "Content-Length: "
+                size_t clEnd = rawRequest.find("\r\n", clPos);
+                int contentLength = 0;
+                if (clEnd != std::string::npos)
+                    contentLength = std::stoi(rawRequest.substr(clPos, clEnd - clPos));
+
+                // 计算还需要接收多少字节
+                size_t headerEnd = rawRequest.find("\r\n\r\n");
+                if (headerEnd != std::string::npos) {
+                    int bodyReceived = (int)bytes - (int)headerEnd - 4;
+                    // 如果 body 还没收完，继续接收
+                    while (bodyReceived < contentLength && bodyReceived >= 0) {
+                        int more = recv(clientSocket, recvBuf + bytes,
+                                        sizeof(recvBuf) - bytes - 1, 0);
+                        if (more <= 0) break;
+                        bytes += more;
+                        recvBuf[bytes] = '\0';
+                        bodyReceived += more;
+                    }
+                    rawRequest = std::string(recvBuf, bytes);
+                }
             }
-            recvBuf[bytes] = '\0';   // 手动添加字符串结束符
-            std::string rawRequest(recvBuf);
 
             // 解析 HTTP 请求
             std::string method, path, queryString, body, token;

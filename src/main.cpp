@@ -498,6 +498,9 @@ static std::string route(const std::string& method, const std::string& path, con
 //   5. server::start()     → 启动 HTTP 服务器（阻塞，永不返回）
 // ============================================================
 int main() {
+    // 设置控制台编码为 UTF-8，防止中文乱码
+    SetConsoleOutputCP(CP_UTF8);
+
     // 第1步：初始化测试数据（如果 data/ 目录为空）
     seedFullData();
 

@@ -70,11 +70,9 @@ namespace handlers {
     // 返回JSON：{"success":true, "data":{"token":"xxx","role":"admin","name":"张三","user_id":"admin001"}}
     // ===================================================================
     std::string login(const std::string& body) {
-        // ① 解析请求体中携带的用户名和密码
         std::string username = parseBodyField(body, "username");
         std::string password = parseBodyField(body, "password");
 
-        // ② 从 CSV 文件中读取所有用户数据
         std::vector<std::vector<std::string>> users = storage::getUsers();
         for (size_t i = 0; i < users.size(); i++) {
             Person p = Person::fromCSV(users[i]);      // 将CSV行转换为Person对象
@@ -149,7 +147,14 @@ namespace handlers {
         if (!utils::isTokenValid(token)) return utils::errorResponse("未登录或登录已过期");
         std::string uid = utils::getUserIdByToken(token);
         std::string role = utils::getUserRoleByToken(token);
-        std::string data = "{\"user_id\":\"" + utils::jsonEscape(uid) + "\",\"role\":\"" + utils::jsonEscape(role) + "\"}";
+        // 从 users.csv 中查找用户名
+        std::string name = uid;
+        std::vector<std::vector<std::string>> users = storage::getUsers();
+        for (size_t i = 0; i < users.size(); i++) {
+            Person p = Person::fromCSV(users[i]);
+            if (p.getId() == uid) { name = p.getName(); break; }
+        }
+        std::string data = "{\"user_id\":\"" + utils::jsonEscape(uid) + "\",\"role\":\"" + utils::jsonEscape(role) + "\",\"name\":\"" + utils::jsonEscape(name) + "\"}";
         return utils::jsonResponse(true, "已登录", data);
     }
 
@@ -289,12 +294,8 @@ namespace handlers {
         int end = start + size;
         if (end > total) end = total;                            // 防止越界
 
-        // 拼装返回的 JSON
-        std::string data = "{";
-        data += "\"total\":" + std::to_string(total) + ",";
-        data += "\"page\":" + std::to_string(page) + ",";
-        data += "\"size\":" + std::to_string(size) + ",";
-        data += "\"data\":[";
+        // 拼装返回的 JSON（前端期望 d.data 直接是学生数组）
+        std::string data = "[";
         for (int i = start; i < end; i++) {
             if (i > start) data += ",";
             data += "{";
@@ -306,7 +307,6 @@ namespace handlers {
             data += "}";
         }
         data += "]";
-        data += "}";
         return utils::jsonResponse(true, "ok", data);
     }
 
@@ -698,31 +698,62 @@ namespace handlers {
     std::string setGrades(const std::string& body) {
         std::string examId = parseBodyField(body, "exam_id");
         std::string studentId = parseBodyField(body, "student_id");
-        std::string scores = parseBodyField(body, "scores");
         if (examId.empty() || studentId.empty())
             return utils::errorResponse("考试ID和学生ID不能为空");
 
+        // 手动提取 scores JSON 对象 {"语文":85,"数学":92} → 转为 "85|92" 存储
+        std::string scores;
+        size_t scoresPos = body.find("\"scores\":{");
+        if (scoresPos != std::string::npos) {
+            scoresPos += 10; // 跳过 "scores":{
+            // 用括号计数找到配对的 }
+            int braceCount = 1;
+            size_t j = scoresPos;
+            while (j < body.size() && braceCount > 0) {
+                if (body[j] == '{') braceCount++;
+                else if (body[j] == '}') braceCount--;
+                j++;
+            }
+            std::string scoresObj = body.substr(scoresPos, j - scoresPos - 1); // 去掉末尾的 }
+            // 解析 key:value 对（忽略 key，只取 value）
+            size_t k = 0;
+            bool firstVal = true;
+            while (k < scoresObj.size()) {
+                // 找冒号
+                size_t colon = scoresObj.find(':', k);
+                if (colon == std::string::npos) break;
+                k = colon + 1;
+                // 跳过空白
+                while (k < scoresObj.size() && (scoresObj[k] == ' ' || scoresObj[k] == '\t')) k++;
+                // 读取数字值
+                size_t start = k;
+                while (k < scoresObj.size() && scoresObj[k] != ',' && scoresObj[k] != '}') k++;
+                std::string val = scoresObj.substr(start, k - start);
+                if (!firstVal) scores += "|";
+                firstVal = false;
+                scores += val;
+                if (k < scoresObj.size() && scoresObj[k] == ',') k++;
+            }
+        }
+
         std::vector<std::vector<std::string>> grades = storage::getGrades();
         bool found = false;
-        // ② 遍历已有成绩，查找【同一学生 + 同一考试】的匹配记录
         for (size_t i = 0; i < grades.size(); i++) {
             if (grades[i][1] == studentId && grades[i][2] == examId) {
-                grades[i][3] = scores;                     // ③ 找到了 → 覆盖旧成绩
+                grades[i][3] = scores;
                 found = true;
                 break;
             }
         }
         if (!found) {
-            // ④ 没找到 → 新增一行成绩
-            // CSV列顺序：ID, 学号, 考试ID, 成绩(逗号分隔), 是否补考, 录入者, 录入时间
             std::vector<std::string> row;
-            row.push_back(std::to_string(grades.size() + 1));  // 自增ID
+            row.push_back(std::to_string(grades.size() + 1));
             row.push_back(studentId);
             row.push_back(examId);
-            row.push_back(scores);                              // 成绩串如 "85,92,78"
-            row.push_back("false");                             // 非补考
-            row.push_back("admin");                             // 录入者
-            row.push_back(utils::getCurrentTime());             // 录入时间
+            row.push_back(scores);
+            row.push_back("false");
+            row.push_back("admin");
+            row.push_back(utils::getCurrentTime());
             grades.push_back(row);
         }
         storage::saveGrades(grades);
@@ -832,31 +863,49 @@ namespace handlers {
 
         std::vector<std::vector<std::string>> grades = storage::getGrades();
         std::vector<std::vector<std::string>> students = storage::getStudents();
+        std::vector<std::vector<std::string>> exams = storage::getExams();
 
         std::string data = "[";
         bool first = true;
         for (size_t i = 0; i < grades.size(); i++) {
-            if (!examId.empty() && grades[i][2] != examId) continue;     // 按考试过滤
-            if (!studentId.empty() && grades[i][1] != studentId) continue; // 按学号过滤
+            if (!examId.empty() && grades[i][2] != examId) continue;
+            if (!studentId.empty() && grades[i][1] != studentId) continue;
             if (!first) data += ","; first = false;
 
-            // 通过学号关联学生表，获取姓名和班级
             std::string sname, sclass;
             for (size_t j = 0; j < students.size(); j++) {
                 if (students[j][0] == grades[i][1]) {
-                    sname = students[j][1];                              // 姓名在列索引1
-                    sclass = students[j][3];                             // 班级在列索引3
+                    sname = students[j][1];
+                    sclass = students[j][3];
                     break;
                 }
             }
+
+            // 查找考试以获取科目列表
+            std::vector<std::string> subList;
+            for (size_t j = 0; j < exams.size(); j++) {
+                if (exams[j][0] == grades[i][2]) {
+                    subList = utils::split(exams[j][4], '|');
+                    break;
+                }
+            }
+
+            // 展开 scores: "85|92|78" → {"语文":85,"数学":92,"英语":78}
+            std::vector<double> scoreList = Grade::fromCSV(grades[i]).getScoreList();
+            std::string scoresObj = "{";
+            for (size_t j = 0; j < scoreList.size() && j < subList.size(); j++) {
+                if (j > 0) scoresObj += ",";
+                scoresObj += "\"" + utils::jsonEscape(subList[j]) + "\":" + std::to_string(scoreList[j]);
+            }
+            scoresObj += "}";
 
             data += "{";
             data += "\"student_id\":\"" + utils::jsonEscape(grades[i][1]) + "\",";
             data += "\"exam_id\":\"" + utils::jsonEscape(grades[i][2]) + "\",";
             data += "\"student_name\":\"" + utils::jsonEscape(sname) + "\",";
             data += "\"class\":\"" + utils::jsonEscape(sclass) + "\",";
-            data += "\"scores\":\"" + utils::jsonEscape(grades[i][3]) + "\",";
-            data += "\"is_makeup\":" + std::string(grades[i][4] == "true" ? "true" : "false"); // 布尔值不带引号
+            data += "\"scores\":" + scoresObj + ",";
+            data += "\"is_makeup\":" + std::string(grades[i][4] == "true" ? "true" : "false");
             data += "}";
         }
         data += "]";
