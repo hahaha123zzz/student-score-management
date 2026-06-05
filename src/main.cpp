@@ -39,13 +39,6 @@ static void seedFullData() {
     // 确保 data/ 目录存在
     utils::ensureDataDir();
 
-    // 如果核心数据文件都已存在，说明曾初始化过，直接返回
-    if (utils::fileExists(utils::DATA_DIR + "users.csv") &&
-        utils::fileExists(utils::DATA_DIR + "students.csv") &&
-        utils::fileExists(utils::DATA_DIR + "exams.csv")) {
-        return;
-    }
-
     // ===== 班级 =====
     // 9 个班级，命名采用常见的"年级+数字+班"格式
     // 高一1班 ~ 高三3班，覆盖高中三个年级
@@ -165,8 +158,8 @@ static void seedFullData() {
         userData.push_back({"T003","王芳老师",utils::hashPassword("123456"),"admin","","2024-09-01"});
     }
 
-    // 遍历 50 名学生的原始数据，同时生成 students.csv 和 users.csv 的行
-    for (int i = 0; i < 50; i++) {
+    // 遍历 34 名学生的原始数据，同时生成 students.csv 和 users.csv 的行
+    for (int i = 0; i < 34; i++) {
         if (needStudents) {
             std::vector<std::string> row;
             for (int j = 0; j < 6; j++) row.push_back(raw[i][j]);   // 取前 6 个字段
@@ -228,7 +221,7 @@ static void seedFullData() {
             std::vector<std::string> subList = utils::split(examSubs[ei], '|');
 
             // 内循环：遍历 50 名学生（si = 0, 1, ..., 49）
-            for (int si = 0; si < 50; si++) {
+            for (int si = 0; si < 34; si++) {
                 // 获取该学生的水平等级（1~6）
                 int level = std::stoi(raw[si][6]);
                 // 基准百分比：level 1→95%, level 2→85%, ..., level 6→45%

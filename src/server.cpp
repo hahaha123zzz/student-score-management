@@ -126,6 +126,9 @@ namespace server {
         if (path.size() >= 4 && path.substr(path.size() - 4) == ".css") return "text/css; charset=utf-8";
         if (path.size() >= 3 && path.substr(path.size() - 3) == ".js") return "application/javascript; charset=utf-8";
         if (path.size() >= 4 && path.substr(path.size() - 4) == ".json") return "application/json; charset=utf-8";
+        // 根路径 "/" 或无扩展名 → 默认按 HTML 处理
+        if (path == "/" || path.find('.') == std::string::npos)
+            return "text/html; charset=utf-8";
         return "text/plain; charset=utf-8";
     }
 
