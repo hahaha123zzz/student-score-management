@@ -190,7 +190,8 @@ std::vector<std::string> Subject::toCSV() const {
 // 反序列化：从 3 个字段还原，第 3 个字段用 std::stoi 转回 int
 Subject Subject::fromCSV(const std::vector<std::string>& fields) {
     if (fields.size() < 3) return Subject();
-    return Subject(fields[0], fields[1], std::stoi(fields[2]));   // string → int 转换
+    try { return Subject(fields[0], fields[1], std::stoi(fields[2])); }
+    catch (...) { return Subject(fields[0], fields[1], 100); }
 }
 
 // ===================================================================
@@ -256,8 +257,11 @@ double Exam::getSubjectWeight(const std::string& subject) const {
     std::vector<std::string> configs = utils::split(m_weightConfig, '|');
     for (size_t i = 0; i < configs.size(); i++) {
         std::vector<std::string> parts = utils::split(configs[i], ':');
-        if (parts.size() >= 3 && parts[0] == subject)
-            return std::stod(parts[2]);    // parts[2] 是权重值
+        if (parts.size() >= 3 && parts[0] == subject) {
+            double val = 1.0;
+            try { val = std::stod(parts[2]); } catch (...) {}
+            return val;
+        }
     }
     return 1.0;    // 找不到则返回默认权重 1.0
 }
@@ -269,8 +273,11 @@ double Exam::getSubjectFull(const std::string& subject) const {
     std::vector<std::string> configs = utils::split(m_weightConfig, '|');
     for (size_t i = 0; i < configs.size(); i++) {
         std::vector<std::string> parts = utils::split(configs[i], ':');
-        if (parts.size() >= 3 && parts[0] == subject)
-            return std::stod(parts[1]);    // parts[1] 是满分值
+        if (parts.size() >= 3 && parts[0] == subject) {
+            double val = 100.0;
+            try { val = std::stod(parts[1]); } catch (...) {}
+            return val;
+        }
     }
     return 100.0;    // 找不到则返回默认满分 100.0
 }
@@ -359,8 +366,10 @@ double Grade::calcTotal(const std::string& weightConfig) const {
     double totalWeighted = 0, totalWeight = 0;
     for (size_t i = 0; i < scores.size() && i < configs.size(); i++) {
         std::vector<std::string> parts = utils::split(configs[i], ':');
-        double full = (parts.size() >= 2 ? std::stod(parts[1]) : 100.0);    // 满分值
-        double weight = (parts.size() >= 3 ? std::stod(parts[2]) : 1.0);    // 权重
+        double full = 100.0;
+        if (parts.size() >= 2) { try { full = std::stod(parts[1]); } catch (...) {} }
+        double weight = 1.0;
+        if (parts.size() >= 3) { try { weight = std::stod(parts[2]); } catch (...) {} }
         totalWeighted += (scores[i] / full) * weight;    // 累加：得分比例 × 权重
         totalWeight += weight;                           // 累加总权重
     }

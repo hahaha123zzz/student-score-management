@@ -115,13 +115,8 @@ namespace handlers {
     // 【删除考试】处理 DELETE /api/exams/{考试ID}
     // ===================================================================
     std::string deleteExam(const std::string& id) {
-        std::vector<std::vector<std::string>> all = storage::getExams();
-        std::vector<std::vector<std::string>> filtered;
-        for (size_t i = 0; i < all.size(); i++) {
-            if (all[i][0] != id) filtered.push_back(all[i]);
-        }
-        if (filtered.size() == all.size()) return utils::errorResponse("考试不存在");
-        storage::saveExams(filtered);
+        if (genericDelete("exams", id) == "notfound")
+            return utils::errorResponse("考试不存在");
         return utils::jsonResponse(true, "考试已删除", "{}");
     }
 
@@ -277,6 +272,8 @@ namespace handlers {
         std::string line;
         std::getline(stream, line);
 
+        std::vector<std::vector<std::string>> grades = storage::getGrades();
+
         int imported = 0, failed = 0;
         while (std::getline(stream, line)) {
             if (line.empty()) continue;
@@ -298,7 +295,6 @@ namespace handlers {
                 scores += parts[i];
             }
 
-            std::vector<std::vector<std::string>> grades = storage::getGrades();
             bool found = false;
             for (size_t i = 0; i < grades.size(); i++) {
                 if (grades[i][1] == studentId && grades[i][2] == examId) {
@@ -318,9 +314,9 @@ namespace handlers {
                 row.push_back(utils::getCurrentTime());
                 grades.push_back(row);
             }
-            storage::saveGrades(grades);
             imported++;
         }
+        storage::saveGrades(grades);
 
         std::string result = "{\"imported\":" + std::to_string(imported) + ",\"failed\":" + std::to_string(failed) + "}";
         return utils::jsonResponse(true, "导入完成", result);
@@ -420,7 +416,6 @@ namespace handlers {
         std::string studentId = utils::getQueryParam(queryString, "student_id");
 
         std::vector<std::vector<std::string>> grades = storage::getGrades();
-        std::vector<std::vector<std::string>> students = storage::getStudents();
         std::vector<std::vector<std::string>> exams = storage::getExams();
 
         std::string data = "[";
@@ -430,14 +425,9 @@ namespace handlers {
             if (!studentId.empty() && grades[i][1] != studentId) continue;
             if (!first) data += ","; first = false;
 
-            std::string sname, sclass;
-            for (size_t j = 0; j < students.size(); j++) {
-                if (students[j][0] == grades[i][1]) {
-                    sname = students[j][1];
-                    sclass = students[j][3];
-                    break;
-                }
-            }
+            std::string info = findStudentInfo(grades[i][1]);
+            std::string sname = utils::split(info, ',')[0];
+            std::string sclass = utils::split(info, ',')[1];
 
             // 查找考试以获取科目列表
             std::vector<std::string> subList;

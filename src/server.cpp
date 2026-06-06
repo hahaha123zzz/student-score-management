@@ -1,45 +1,10 @@
 #include "server.h"
+#include <winsock2.h>
 #include <iostream>
 #include <fstream>
 #include <sstream>
 
-// ============================================================
-// 【跨平台网络编程】不同操作系统的 Socket API
-// ============================================================
-// Windows 使用 WinSock2，需要链接 ws2_32.lib
-//   - WSAStartup() / WSACleanup()：初始化和清理
-//   - closesocket()：关闭连接
-//   - SOCKET 是无符号整数类型
-//
-// macOS / Linux 使用 POSIX（Berkeley）Socket
-//   - 头文件：<sys/socket.h> <netinet/in.h> <arpa/inet.h> <unistd.h>
-//   - 不需要初始化和清理
-//   - 直接用 close() 关闭连接（因为 socket 也是文件描述符）
-//   - SOCKET 就是 int 类型
-//
-// 核心 API（socket / bind / listen / accept / recv / send）在两种系统上
-// 名称和用法完全相同，所以业务代码不用改，只需处理头文件和类型定义。
-// ============================================================
-
-#ifdef _WIN32
-    // Windows：使用 WinSock2
-    #include <winsock2.h>
-    #pragma comment(lib, "ws2_32.lib")   // 自动链接 WinSock 库
-    #define CLOSE_SOCKET(s) closesocket(s)
-    // SOCKET 类型在 <winsock2.h> 中已定义（无符号整数）
-    // INVALID_SOCKET 和 SOCKET_ERROR 也已定义
-#else
-    // macOS / Linux：使用 POSIX Socket（Berkeley sockets）
-    #include <sys/socket.h>      // socket / bind / listen / accept 等函数
-    #include <netinet/in.h>      // sockaddr_in 结构体（IPv4 地址）
-    #include <arpa/inet.h>       // htons / htonl 字节序转换函数
-    #include <unistd.h>          // close 函数
-    #define CLOSE_SOCKET(s) close(s)
-    // POSIX 中 socket 返回 int，-1 表示错误
-    typedef int SOCKET;
-    #define INVALID_SOCKET (-1)
-    #define SOCKET_ERROR   (-1)
-#endif
+#pragma comment(lib, "ws2_32.lib")
 
 namespace server {
 
@@ -151,13 +116,8 @@ namespace server {
     // 读取前端静态文件（HTML / CSS / JS / JSON），从磁盘加载到内存并返回内容
     // 路径分隔符：Windows 用 \，macOS/Linux 用 /
     static std::string readStaticFile(const std::string& urlPath) {
-#ifdef _WIN32
-        const char SEP = '\\';
-#else
-        const char SEP = '/';
-#endif
         if (urlPath == "/") {
-            std::string fpath = g_webDir + SEP + "login.html";
+            std::string fpath = g_webDir + "\\login.html";
             std::ifstream f(fpath, std::ios::binary);
             if (f.is_open()) {
                 std::string content((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
@@ -165,11 +125,14 @@ namespace server {
             }
         }
         // 将 URL 路径拼接到 web 目录下，URL 中的 / 替换为平台路径分隔符
-        std::string fpath = g_webDir + SEP;
+        std::string fpath = g_webDir + "\\";
         for (size_t i = 1; i < urlPath.size(); i++) {
-            if (urlPath[i] == '/') fpath += SEP;
+            if (urlPath[i] == '/') fpath += '\\';
             else fpath += urlPath[i];
         }
+        // 安全检查：拒绝包含 .. 的路径，防止目录穿越攻击
+        if (fpath.find("..") != std::string::npos)
+            return "";
         std::ifstream f(fpath, std::ios::binary);
         if (f.is_open()) {
             std::string content((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
@@ -240,7 +203,7 @@ namespace server {
 
         if (bind(serverSocket, (sockaddr*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR) {
             std::cerr << "bind failed" << std::endl;
-            CLOSE_SOCKET(serverSocket);
+            closesocket(serverSocket);
 #ifdef _WIN32
             WSACleanup();
 #endif
@@ -254,7 +217,7 @@ namespace server {
         // 此时服务器开始等待客户端（浏览器）的连接请求
         if (listen(serverSocket, SOMAXCONN) == SOCKET_ERROR) {
             std::cerr << "listen failed" << std::endl;
-            CLOSE_SOCKET(serverSocket);
+            closesocket(serverSocket);
 #ifdef _WIN32
             WSACleanup();
 #endif
@@ -282,7 +245,7 @@ namespace server {
             // TCP 是流协议，一次 recv() 可能只收到部分数据（头部和体可能分两次到达）
             // 因此需要循环接收，直到收到完整请求
             int bytes = recv(clientSocket, recvBuf, sizeof(recvBuf) - 1, 0);
-            if (bytes <= 0) { CLOSE_SOCKET(clientSocket); continue; }
+            if (bytes <= 0) { closesocket(clientSocket); continue; }
             recvBuf[bytes] = '\0';
             std::string rawRequest(recvBuf, bytes);
 
@@ -293,7 +256,12 @@ namespace server {
                 size_t clEnd = rawRequest.find("\r\n", clPos);
                 int contentLength = 0;
                 if (clEnd != std::string::npos)
-                    contentLength = std::stoi(rawRequest.substr(clPos, clEnd - clPos));
+                    try { contentLength = std::stoi(rawRequest.substr(clPos, clEnd - clPos)); } catch (...) {}
+
+                if (contentLength > 65536) { // 限制请求体最大64KB
+                    closesocket(clientSocket);
+                    continue;
+                }
 
                 // 计算还需要接收多少字节
                 size_t headerEnd = rawRequest.find("\r\n\r\n");
@@ -301,8 +269,9 @@ namespace server {
                     int bodyReceived = (int)bytes - (int)headerEnd - 4;
                     // 如果 body 还没收完，继续接收
                     while (bodyReceived < contentLength && bodyReceived >= 0) {
-                        int more = recv(clientSocket, recvBuf + bytes,
-                                        sizeof(recvBuf) - bytes - 1, 0);
+                        int remaining = (int)sizeof(recvBuf) - bytes - 1;
+                        if (remaining <= 0) break; // 防止缓冲区溢出
+                        int more = recv(clientSocket, recvBuf + bytes, remaining, 0);
                         if (more <= 0) break;
                         bytes += more;
                         recvBuf[bytes] = '\0';
@@ -404,11 +373,11 @@ namespace server {
             send(clientSocket, response.c_str(), (int)response.size(), 0);
 
             // ----- close：关闭与该客户端的连接（"挂断电话"）-----
-            CLOSE_SOCKET(clientSocket);
+            closesocket(clientSocket);
         }
 
         // 程序退出时（实际上永远不会执行到这里，因为 while(true) 无限循环）
-        CLOSE_SOCKET(serverSocket);
+        closesocket(serverSocket);
 #ifdef _WIN32
         WSACleanup();   // Windows：清理 WinSock 库，释放系统资源
 #endif                  // macOS/Linux：不需要清理

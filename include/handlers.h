@@ -172,4 +172,10 @@ namespace handlers {
     // 支持字符串类型和数字类型的值提取
     std::string parseBodyField(const std::string& body, const std::string& key);
 
+    // 根据学号查找学生信息（姓名、班级），返回逗号分隔: "姓名,班级"
+    std::string findStudentInfo(const std::string& studentId);
+
+    // 通用删除逻辑：从CSV表中按ID删除一行
+    std::string genericDelete(const std::string& filename, const std::string& id);
+
 }

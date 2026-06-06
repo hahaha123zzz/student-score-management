@@ -12,6 +12,7 @@
  * 依赖关系：storage → models → sort → utils
  */
 #include "stats.h"
+#include "handlers.h"
 #include "storage.h"
 #include "models.h"
 #include "sort.h"
@@ -46,7 +47,6 @@ namespace stats {
 
         // 加载需要的数据
         std::vector<std::vector<std::string>> grades = storage::getGrades();
-        std::vector<std::vector<std::string>> students = storage::getStudents();
         std::vector<std::vector<std::string>> exams = storage::getExams();
 
         // 找到对应的考试（获取科目列表和权重配置）
@@ -93,14 +93,9 @@ namespace stats {
             studentIds.push_back(sid);
 
             // 根据学号查学生信息
-            std::string sname, sclass;
-            for (size_t j = 0; j < students.size(); j++) {
-                if (students[j][0] == sid) {
-                    sname = students[j][1];  // 姓名在CSV第2列
-                    sclass = students[j][3]; // 班级在CSV第4列
-                    break;
-                }
-            }
+            std::string info = handlers::findStudentInfo(sid);
+            std::string sname = utils::split(info, ',')[0];
+            std::string sclass = utils::split(info, ',')[1];
             studentNames.push_back(sname);
             classes.push_back(sclass);
         }
@@ -357,7 +352,6 @@ namespace stats {
     std::string getWarnings() {
         std::vector<std::vector<std::string>> grades = storage::getGrades();
         std::vector<std::vector<std::string>> exams = storage::getExams();
-        std::vector<std::vector<std::string>> students = storage::getStudents();
 
         std::string data = "[";
         bool first = true;
@@ -375,14 +369,9 @@ namespace stats {
             std::vector<double> scoreList = g.getScoreList();
 
             // 查学生姓名和班级
-            std::string sname, sclass;
-            for (size_t j = 0; j < students.size(); j++) {
-                if (students[j][0] == grades[i][1]) {
-                    sname = students[j][1];
-                    sclass = students[j][3];
-                    break;
-                }
-            }
+            std::string info = handlers::findStudentInfo(grades[i][1]);
+            std::string sname = utils::split(info, ',')[0];
+            std::string sclass = utils::split(info, ',')[1];
 
             // 逐科检查是否不及格
             for (size_t j = 0; j < slist.size() && j < scoreList.size(); j++) {

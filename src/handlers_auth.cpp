@@ -237,14 +237,59 @@ namespace handlers {
     // 使用"过滤法"删除：遍历所有用户，保留 ID 不匹配的，达到删除的效果
     // ===================================================================
     std::string deleteUser(const std::string& userId) {
-        std::vector<std::vector<std::string>> users = storage::getUsers();
-        std::vector<std::vector<std::string>> filtered;   // 新建容器，只保留未被删除的
-        for (size_t i = 0; i < users.size(); i++) {
-            if (users[i][0] != userId) filtered.push_back(users[i]); // 跳过要删除的那一行
-        }
-        if (filtered.size() == users.size()) return utils::errorResponse("用户不存在"); // 没删掉任何一行
-        storage::saveUsers(filtered);
+        if (genericDelete("users", userId) == "notfound")
+            return utils::errorResponse("用户不存在");
         return utils::jsonResponse(true, "用户已删除", "{}");
+    }
+
+    std::string findStudentInfo(const std::string& studentId) {
+        std::vector<std::vector<std::string>> students = storage::getStudents();
+        for (size_t i = 0; i < students.size(); i++) {
+            if (students[i][0] == studentId) {
+                return students[i][1] + "," + students[i][3]; // 姓名,班级
+            }
+        }
+        return studentId + ","; // 找不到返回学号
+    }
+
+    std::string genericDelete(const std::string& filename, const std::string& id) {
+        if (filename == "users") {
+            std::vector<std::vector<std::string>> data = storage::getUsers();
+            std::vector<std::vector<std::string>> filtered;
+            for (size_t i = 0; i < data.size(); i++)
+                if (data[i][0] != id) filtered.push_back(data[i]);
+            if (filtered.size() == data.size()) return "notfound";
+            storage::saveUsers(filtered);
+        } else if (filename == "students") {
+            std::vector<std::vector<std::string>> data = storage::getStudents();
+            std::vector<std::vector<std::string>> filtered;
+            for (size_t i = 0; i < data.size(); i++)
+                if (data[i][0] != id) filtered.push_back(data[i]);
+            if (filtered.size() == data.size()) return "notfound";
+            storage::saveStudents(filtered);
+        } else if (filename == "classes") {
+            std::vector<std::vector<std::string>> data = storage::getClasses();
+            std::vector<std::vector<std::string>> filtered;
+            for (size_t i = 0; i < data.size(); i++)
+                if (data[i][0] != id) filtered.push_back(data[i]);
+            if (filtered.size() == data.size()) return "notfound";
+            storage::saveClasses(filtered);
+        } else if (filename == "subjects") {
+            std::vector<std::vector<std::string>> data = storage::getSubjects();
+            std::vector<std::vector<std::string>> filtered;
+            for (size_t i = 0; i < data.size(); i++)
+                if (data[i][0] != id) filtered.push_back(data[i]);
+            if (filtered.size() == data.size()) return "notfound";
+            storage::saveSubjects(filtered);
+        } else if (filename == "exams") {
+            std::vector<std::vector<std::string>> data = storage::getExams();
+            std::vector<std::vector<std::string>> filtered;
+            for (size_t i = 0; i < data.size(); i++)
+                if (data[i][0] != id) filtered.push_back(data[i]);
+            if (filtered.size() == data.size()) return "notfound";
+            storage::saveExams(filtered);
+        }
+        return "ok";
     }
 
     // ===== 日志 =====
@@ -255,7 +300,8 @@ namespace handlers {
     // ===================================================================
     std::string getLogs(const std::string& queryString) {
         std::string pageStr = utils::getQueryParam(queryString, "page");
-        int page = pageStr.empty() ? 1 : std::stoi(pageStr); // 默认第1页
+        int page = 1;
+        try { if (!pageStr.empty()) page = std::stoi(pageStr); } catch (...) {}
         int size = 50;                                       // 每页固定50条
         return utils::getLogs(page, size, "");
     }

@@ -26,8 +26,10 @@ namespace handlers {
         std::string cls = utils::getQueryParam(queryString, "class");
         std::string pageStr = utils::getQueryParam(queryString, "page");
         std::string sizeStr = utils::getQueryParam(queryString, "size");
-        int page = pageStr.empty() ? 1 : std::stoi(pageStr);    // 默认第1页
-        int size = sizeStr.empty() ? 20 : std::stoi(sizeStr);   // 默认每页20条
+        int page = 1;
+        try { if (!pageStr.empty()) page = std::stoi(pageStr); } catch (...) {}
+        int size = 20;
+        try { if (!sizeStr.empty()) size = std::stoi(sizeStr); } catch (...) {}
 
         std::vector<std::vector<std::string>> all = storage::getStudents();
         std::vector<Student> filtered;                           // 用于存放筛选后的结果
@@ -124,17 +126,10 @@ namespace handlers {
 
     // ===================================================================
     // 【删除学生】处理 DELETE /api/students/{学号}
-    // 使用"过滤法"——保留所有学号不匹配的行，直接丢弃要删除的那一行
-    // 如果过滤前后数量一致，说明没找到该学生
     // ===================================================================
     std::string deleteStudent(const std::string& id) {
-        std::vector<std::vector<std::string>> all = storage::getStudents();
-        std::vector<std::vector<std::string>> filtered;
-        for (size_t i = 0; i < all.size(); i++) {
-            if (all[i][0] != id) filtered.push_back(all[i]);   // 过滤掉要删除的行
-        }
-        if (filtered.size() == all.size()) return utils::errorResponse("学生不存在");
-        storage::saveStudents(filtered);
+        if (genericDelete("students", id) == "notfound")
+            return utils::errorResponse("学生不存在");
         return utils::jsonResponse(true, "学生已删除", "{}");
     }
 
@@ -210,13 +205,8 @@ namespace handlers {
     // 【删除班级】处理 DELETE /api/classes/{班级ID}
     // ===================================================================
     std::string deleteClass(const std::string& id) {
-        std::vector<std::vector<std::string>> all = storage::getClasses();
-        std::vector<std::vector<std::string>> filtered;
-        for (size_t i = 0; i < all.size(); i++) {
-            if (all[i][0] != id) filtered.push_back(all[i]);
-        }
-        if (filtered.size() == all.size()) return utils::errorResponse("班级不存在");
-        storage::saveClasses(filtered);
+        if (genericDelete("classes", id) == "notfound")
+            return utils::errorResponse("班级不存在");
         return utils::jsonResponse(true, "班级已删除", "{}");
     }
 
@@ -252,7 +242,8 @@ namespace handlers {
     std::string addSubject(const std::string& body) {
         std::string name = parseBodyField(body, "name");
         std::string fullScoreStr = parseBodyField(body, "full_score");
-        int fullScore = fullScoreStr.empty() ? 100 : std::stoi(fullScoreStr); // 默认满分100
+        int fullScore = 100;
+        try { if (!fullScoreStr.empty()) fullScore = std::stoi(fullScoreStr); } catch (...) {}
         if (name.empty()) return utils::errorResponse("科目名称不能为空");
 
         std::vector<std::vector<std::string>> all = storage::getSubjects();
@@ -294,13 +285,8 @@ namespace handlers {
     // 【删除科目】处理 DELETE /api/subjects/{科目ID}
     // ===================================================================
     std::string deleteSubject(const std::string& id) {
-        std::vector<std::vector<std::string>> all = storage::getSubjects();
-        std::vector<std::vector<std::string>> filtered;
-        for (size_t i = 0; i < all.size(); i++) {
-            if (all[i][0] != id) filtered.push_back(all[i]);
-        }
-        if (filtered.size() == all.size()) return utils::errorResponse("科目不存在");
-        storage::saveSubjects(filtered);
+        if (genericDelete("subjects", id) == "notfound")
+            return utils::errorResponse("科目不存在");
         return utils::jsonResponse(true, "科目已删除", "{}");
     }
 

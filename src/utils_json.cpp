@@ -42,11 +42,6 @@
 
 namespace utils {
 
-    // token → 用户ID 的映射表（登录时写入，后续请求通过它查身份）
-    static std::map<std::string, std::string> tokenToUserId;
-    // 用户ID → 角色的映射表（登录时写入，用于权限判断）
-    static std::map<std::string, std::string> userRoles;
-
     // =================================================================
     // 八、JSON 响应构建
     //   本系统未使用第三方 JSON 库（如 nlohmann/json），
