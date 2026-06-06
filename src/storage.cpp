@@ -28,7 +28,30 @@ namespace storage {
     // 返回 vector<string>，即分割后的各个字段。
     // 例如输入 "101,张三,男" → 返回 {"101", "张三", "男"}
     std::vector<std::string> splitCSV(const std::string& line) {
-        return utils::split(line, ',');
+        std::vector<std::string> result;
+        std::string current;
+        bool inQuotes = false;
+        for (size_t i = 0; i < line.size(); i++) {
+            char c = line[i];
+            if (inQuotes) {
+                if (c == '"') {
+                    inQuotes = false;
+                } else {
+                    current += c;
+                }
+            } else {
+                if (c == '"') {
+                    inQuotes = true;
+                } else if (c == ',') {
+                    result.push_back(current);
+                    current.clear();
+                } else {
+                    current += c;
+                }
+            }
+        }
+        result.push_back(current);
+        return result;
     }
 
     // ----- 转义字段中的特殊字符 -----

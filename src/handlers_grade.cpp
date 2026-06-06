@@ -155,10 +155,27 @@ namespace handlers {
         std::vector<std::vector<std::string>> all = storage::getExams();
         for (size_t i = 0; i < all.size(); i++) {
             if (all[i][0] == id) {
-                if (all[i][3] == "locked") return utils::errorResponse("已锁定不能撤回");
+                if (all[i][3] == "locked")
+                    return utils::errorResponse("已锁定不能撤回，请先解锁");
+                if (all[i][3] != "published")
+                    return utils::errorResponse("只有已发布的考试才能撤回");
                 all[i][3] = "draft";                          // 改回草稿状态
                 storage::saveExams(all);
                 return utils::jsonResponse(true, "成绩已撤回", "{}");
+            }
+        }
+        return utils::errorResponse("考试不存在");
+    }
+
+    std::string unlockExam(const std::string& id) {
+        std::vector<std::vector<std::string>> all = storage::getExams();
+        for (size_t i = 0; i < all.size(); i++) {
+            if (all[i][0] == id) {
+                if (all[i][3] != "locked")
+                    return utils::errorResponse("只有已锁定的考试才能解锁");
+                all[i][3] = "draft";
+                storage::saveExams(all);
+                return utils::jsonResponse(true, "成绩已解锁，状态恢复为草稿", "{}");
             }
         }
         return utils::errorResponse("考试不存在");

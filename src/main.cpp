@@ -479,6 +479,11 @@ static std::string route(const std::string& method, const std::string& path, con
             return utils::errorResponse("权限不足");
         return handlers::retractExam(eid.substr(0, eid.size() - 8));
     }
+    if (eid.find("/unlock") != std::string::npos) {
+        if (!handlers::isAdmin(token))
+            return utils::errorResponse("权限不足");
+        return handlers::unlockExam(eid.substr(0, eid.size() - 7));
+    }
     if (!eid.empty() && method == "PUT") {
         if (!handlers::isAdmin(token))
             return utils::errorResponse("权限不足");

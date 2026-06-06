@@ -126,8 +126,12 @@ namespace handlers {
 
     // 撤回已发布的成绩 —— PUT /api/exams/{考试ID}/retract
     // 将考试状态从 published 改回 draft，学生端不可见
-    // 注意：locked 状态的考试不能撤回
+    // 注意：locked 状态的考试不能撤回，draft 状态也不能撤回
     std::string retractExam(const std::string& id);
+
+    // 解锁成绩 —— PUT /api/exams/{考试ID}/unlock
+    // 将考试状态从 locked 改为 draft，解除锁定
+    std::string unlockExam(const std::string& id);
 
     // ===== 成绩管理 =====
 
