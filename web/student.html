@@ -45,15 +45,12 @@
                     <select id="rankExam" onchange="loadMyRank()">
                         <option value="">选择考试</option>
                     </select>
-                    <select id="rankType" onchange="loadMyRank()">
-                        <option value="total">总分排名</option>
+                    <select id="rankSubject" onchange="loadMyRank()">
+                        <option value="">总分排名</option>
                     </select>
                 </div>
             </div>
-            <h3 style="margin-bottom:12px;">我的排名</h3>
-            <div class="stats-cards" id="myRankCards"></div>
-            <h3 style="margin:20px 0 12px;">年级排名 TOP 10</h3>
-            <div id="rankTopTable"></div>
+            <div id="myRankTable"></div>
         </div>
     </div>
 
@@ -77,20 +74,12 @@
         function init() {
             api('GET', '/api/auth/check').then(function(d) {
                 if (!d.success) { logout(); return; }
-                document.getElementById('userInfo').textContent = d.data.name + ' (' + d.data.role + ')';
-                // 加载个人信息
-                api('GET', '/api/students?search=' + d.data.id).then(function(r) {
-                    if (r.success && r.data[0]) {
-                        var s = r.data[0];
-                        document.getElementById('personalInfo').innerHTML =
-                            '<div class="info-item"><strong>学号：</strong>' + s.id + '</div>' +
-                            '<div class="info-item"><strong>姓名：</strong>' + s.name + '</div>' +
-                            '<div class="info-item"><strong>性别：</strong>' + (s.gender || '') + '</div>' +
-                            '<div class="info-item"><strong>班级：</strong>' + (s.class || '') + '</div>';
-                    }
-                });
+                document.getElementById('userInfo').textContent = d.data.name + ' (学生)';
+                myStudentId = d.data.user_id;
+                document.getElementById('personalInfo').innerHTML = '<span>学号：' + myStudentId + '</span> | <span>姓名：' + d.data.name + '</span>';
+                loadMyGrades();
+                loadExamSelects();
             });
-            loadExamSelects();
         }
 
         function logout() {
@@ -117,7 +106,7 @@
             if (name === 'rank') loadMyRank();
         }
 
-        function buildTable(headers, rows) {
+        function buildTable(headers, rows, _unused) {
             var html = '<table><thead><tr>';
             headers.forEach(function(h) { html += '<th>' + h + '</th>'; });
             html += '</tr></thead><tbody>';
@@ -137,107 +126,98 @@
         function loadExamSelects() {
             api('GET', '/api/exams').then(function(d) {
                 if (!d.success) return;
-                var opts = '<option value="">选择考试</option>';
-                d.data.forEach(function(e) {
-                    opts += '<option value="' + e.id + '">' + e.name + '</option>';
-                });
-                document.getElementById('gradeExam').innerHTML = '<option value="">全部考试</option>' + opts;
-                document.getElementById('rankExam').innerHTML = opts;
-                loadMyGrades();
+                var opts = '<option value="">全部考试</option>';
+                d.data.forEach(function(e) { opts += '<option value="' + e.id + '">' + e.name + '</option>'; });
+                document.getElementById('gradeExam').innerHTML = opts;
+                document.getElementById('rankExam').innerHTML = '<option value="">选择考试</option>' + opts.replace('全部考试','');
+            });
+            api('GET', '/api/subjects').then(function(d) {
+                if (!d.success) return;
+                var rankSub = document.getElementById('rankSubject');
+                var opts = '<option value="">总分排名</option>';
+                d.data.forEach(function(s) { opts += '<option value="' + s.name + '">' + s.name + '排名</option>'; });
+                if (rankSub) rankSub.innerHTML = opts;
             });
         }
 
         // ====== 我的成绩 ======
+        var myStudentId = '';
         function loadMyGrades() {
-            api('GET', '/api/grades/student/' + user.id).then(function(d) {
-                if (!d.success) return;
-                var examId = document.getElementById('gradeExam').value;
-                var grades = d.data;
-                if (examId) {
-                    grades = grades.filter(function(g) { return g.exam_id === examId; });
-                }
-
-                // 构建表格数据
-                var rows = [];
-                var allSubjects = {};
-                grades.forEach(function(g) {
-                    for (var k in g.scores) { allSubjects[k] = true; }
+            if (!myStudentId) {
+                api('GET', '/api/auth/check').then(function(ad) {
+                    if (!ad.success) return;
+                    myStudentId = ad.data.user_id;
+                    loadMyGradesData();
                 });
-                var subjectList = Object.keys(allSubjects).sort();
+            } else {
+                loadMyGradesData();
+            }
+        }
 
-                grades.forEach(function(g) {
-                    var row = { 考试: g.exam_id };
-                    subjectList.forEach(function(s) { row[s] = g.scores[s] || '-'; });
-                    // 计算总分
-                    var total = 0, count = 0;
-                    subjectList.forEach(function(s) {
-                        if (g.scores[s]) { total += parseFloat(g.scores[s]); count++; }
-                    });
-                    row['总分'] = total;
-                    row['平均分'] = count > 0 ? (total / count).toFixed(1) : '-';
+        function loadMyGradesData() {
+            var examId = document.getElementById('gradeExam').value;
+            var url = '/api/grades?student_id=' + myStudentId;
+            if (examId) url += '&exam_id=' + examId;
+            api('GET', url).then(function(d) {
+                if (!d.success || !d.data || d.data.length === 0) {
+                    document.getElementById('myGradesTable').innerHTML = '<p style="color:#999;text-align:center;padding:40px;">暂无成绩数据，请确认已参加考试</p>';
+                    return;
+                }
+                var subjects = [];
+                var rows = [];
+                d.data.forEach(function(g) {
+                    var row = { 考试: g.exam_id, 姓名: g.student_name, 班级: g.class };
+                    if (g.scores && typeof g.scores === 'object') {
+                        var sum = 0, cnt = 0;
+                        for (var k in g.scores) {
+                            if (subjects.indexOf(k) === -1) subjects.push(k);
+                            var v = parseFloat(g.scores[k]) || 0;
+                            row[k] = v;
+                            sum += v;
+                            cnt++;
+                        }
+                        row['总分'] = sum;
+                    }
+                    if (g.is_makeup) row['备注'] = '补考';
                     rows.push(row);
                 });
-
-                var headers = ['考试'].concat(subjectList).concat(['总分','平均分']);
-                document.getElementById('myGradesTable').innerHTML = buildTable(headers, rows);
-
-                // 摘要
-                if (grades.length > 0) {
-                    var bestTotal = 0, bestExam = '';
-                    rows.forEach(function(r) {
-                        if (parseFloat(r['总分']) > bestTotal) {
-                            bestTotal = parseFloat(r['总分']);
-                            bestExam = r['考试'];
-                        }
-                    });
-                    document.getElementById('gradeSummary').innerHTML =
-                        '<div class="stats-cards" style="margin-top:16px;">' +
-                        '<div class="stat-card"><div class="value">' + grades.length + '</div><div class="label">参加考试次数</div></div>' +
-                        '<div class="stat-card"><div class="value">' + bestTotal + '</div><div class="label">历史最高总分（' + bestExam + '）</div></div>' +
-                        '</div>';
-                }
+                var headers = ['考试','姓名','班级'].concat(subjects).concat(['总分']);
+                document.getElementById('myGradesTable').innerHTML = buildTable(headers, rows, []);
             });
         }
 
         // ====== 排名查看 ======
         function loadMyRank() {
             var examId = document.getElementById('rankExam').value;
-            if (!examId) return;
-
-            var rankType = document.getElementById('rankType').value;
-
-            // 获取总分排名
-            api('GET', '/api/stats/rank?exam_id=' + examId + '&type=' + rankType).then(function(d) {
-                if (!d.success || !d.data) return;
-
-                // 找我的排名
-                var myRank = d.data.find(function(r) { return r.student_id === user.id; });
-
-                if (myRank) {
-                    document.getElementById('myRankCards').innerHTML =
-                        '<div class="stat-card"><div class="value">第 ' + myRank.rank + ' 名</div><div class="label">年级排名</div></div>' +
-                        '<div class="stat-card"><div class="value">' + myRank.total_score + '</div><div class="label">总分</div></div>' +
-                        '<div class="stat-card"><div class="value">' + myRank.avg_score + '</div><div class="label">平均分</div></div>' +
-                        '<div class="stat-card"><div class="value">共 ' + d.data.length + ' 人</div><div class="label">年级总人数</div></div>';
-                } else {
-                    document.getElementById('myRankCards').innerHTML = '<p style="color:#999;">暂无该次考试的排名数据</p>';
+            if (!examId || !myStudentId) {
+                document.getElementById('myRankTable').innerHTML = '<p style="color:#999;text-align:center;padding:40px;">请选择考试</p>';
+                return;
+            }
+            var subject = document.getElementById('rankSubject') ? document.getElementById('rankSubject').value : '';
+            var url = '/api/stats/rank?exam_id=' + examId + '&type=global';
+            if (subject) url += '&subject=' + encodeURIComponent(subject);
+            api('GET', url).then(function(d) {
+                if (!d.success || !d.data || d.data.length === 0) {
+                    document.getElementById('myRankTable').innerHTML = '<p style="color:#999;text-align:center;padding:40px;">暂无排名数据</p>';
+                    return;
                 }
-
-                // TOP 10
-                var top10 = d.data.slice(0, 10).map(function(r) {
-                    return {
-                        排名: r.rank,
-                        学号: r.student_id,
-                        姓名: r.name || '',
-                        班级: r.class || '',
-                        总分: r.total_score,
-                        平均分: r.avg_score,
-                        备注: r.student_id === user.id ? '← 我' : ''
-                    };
+                var selfRank = null;
+                var top10 = [];
+                d.data.forEach(function(r, i) {
+                    if (r.student_id === myStudentId) selfRank = r;
+                    if (i < 10) top10.push(r);
                 });
-                document.getElementById('rankTopTable').innerHTML = buildTable(
-                    ['排名','学号','姓名','班级','总分','平均分','备注'], top10
-                );
+                var rows = top10.map(function(r) {
+                    return { 排名: r.rank, 学号: r.student_id, 姓名: r.student_name, 班级: r.class, 总分: r.total_score };
+                });
+                var headers = ['排名','学号','姓名','班级','总分'];
+                var html = '<h3>年级前十名</h3>';
+                html += buildTable(headers, rows, []);
+                if (selfRank) {
+                    html += '<h3 style="margin-top:20px;">我的排名</h3>';
+                    html += buildTable(headers, [{ 排名: selfRank.rank, 学号: selfRank.student_id, 姓名: selfRank.student_name, 班级: selfRank.class, 总分: selfRank.total_score }], []);
+                }
+                document.getElementById('myRankTable').innerHTML = html;
             });
         }
 

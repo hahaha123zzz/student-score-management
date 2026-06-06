@@ -82,24 +82,34 @@
                     <select id="statsExam" onchange="loadStats()">
                         <option value="">选择考试</option>
                     </select>
-                    <button onclick="loadStats()">查询</button>
                 </div>
             </div>
-            <div class="stats-cards" id="statsSummary"></div>
-            <h3 style="margin:20px 0 12px;">排名 TOP 10</h3>
-            <div id="rankTable"></div>
-            <h3 style="margin:20px 0 12px;">班级对比</h3>
-            <div id="classCompareTable"></div>
+            <div id="statsContent">
+                <div style="margin-bottom:30px">
+                    <h3>成绩排名（前十）</h3>
+                    <div id="statsRankTable"></div>
+                </div>
+                <div style="margin-bottom:30px">
+                    <h3>班级对比</h3>
+                    <div id="statsClassTable"></div>
+                </div>
+                <div style="margin-bottom:30px">
+                    <h3>分数段分布</h3>
+                    <div id="statsDistTable"></div>
+                </div>
+                <div style="margin-bottom:30px">
+                    <h3>不及格预警</h3>
+                    <div id="statsWarnTable"></div>
+                </div>
+            </div>
         </div>
 
         <!-- ====== 操作日志 ====== -->
         <div id="tab-logs" class="tab-content">
             <div class="toolbar">
                 <h3>操作日志</h3>
-                <button onclick="loadLogs()">刷新</button>
             </div>
             <div id="logsTable"></div>
-            <div class="pagination" id="logsPager"></div>
         </div>
     </div>
 
@@ -340,7 +350,8 @@
 
         function editStudent(id) {
             api('GET', '/api/students?search=' + id).then(function(d) {
-                if (!d.success || !d.data[0]) return;
+                if (!d.success) { showMessage(d.message, d.success); return; }
+                if (!d.data[0]) { showMessage('未找到学生信息', false); return; }
                 var s = d.data[0];
                 showStudentModal({ id: s.id, 姓名: s.name, 性别: s.gender, 班级: s.class, 生日: s.birthday });
             });
@@ -549,65 +560,65 @@
         // ====== 统计分析 ======
         function loadStats() {
             var examId = document.getElementById('statsExam').value;
-            if (!examId) return;
-
-            // 排名
+            if (!examId) { 
+                document.getElementById('statsContent').innerHTML = '<p style="color:#999;text-align:center;padding:40px;">请先选择考试</p>';
+                return; 
+            }
+            // Load rank
             api('GET', '/api/stats/rank?exam_id=' + examId + '&type=total').then(function(d) {
-                if (d.success && d.data) {
-                    var rows = d.data.slice(0, 10).map(function(r) {
-                        return { 排名: r.rank, 学号: r.student_id, 姓名: r.name, 班级: r.class, 总分: r.total_score, 平均分: r.avg_score };
-                    });
-                    document.getElementById('rankTable').innerHTML = buildTable(['排名','学号','姓名','班级','总分','平均分'], rows);
-                }
-            });
-
-            // 班级对比
-            api('GET', '/api/stats/class-compare?exam_id=' + examId).then(function(d) {
-                if (d.success && d.data) {
-                    var rows = d.data.map(function(c) {
-                        return {
-                            班级: c.class_name,
-                            人数: c.student_count,
-                            平均分: c.avg_score,
-                            最高分: c.max_score,
-                            最低分: c.min_score,
-                            优秀率: (c.excellent_rate || '0') + '%',
-                            及格率: (c.pass_rate || '0') + '%'
-                        };
-                    });
-                    document.getElementById('classCompareTable').innerHTML = buildTable(
-                        ['班级','人数','平均分','最高分','最低分','优秀率','及格率'], rows
-                    );
-                }
-            });
-
-            // 统计摘要
-            api('GET', '/api/stats/rank?exam_id=' + examId + '&type=total').then(function(d) {
-                if (!d.success || !d.data) return;
-                var totalStudents = d.data.length;
-                var failCount = 0;
-                var excellentCount = 0;
-                d.data.forEach(function(r) {
-                    if (parseFloat(r.avg_score) < 60) failCount++;
-                    if (parseFloat(r.avg_score) >= 85) excellentCount++;
+                if (!d.success) return;
+                var rows = d.data.slice(0, 10).map(function(r, i) {
+                    return { 排名: r.rank, 学号: r.student_id, 姓名: r.student_name, 班级: r.class, 总分: r.total_score };
                 });
-                document.getElementById('statsSummary').innerHTML =
-                    '<div class="stat-card"><div class="value">' + totalStudents + '</div><div class="label">总人数</div></div>' +
-                    '<div class="stat-card"><div class="value">' + excellentCount + '</div><div class="label">优秀人数(>=85)</div></div>' +
-                    '<div class="stat-card"><div class="value">' + failCount + '</div><div class="label">不及格人数(<60)</div></div>' +
-                    '<div class="stat-card"><div class="value">' + (totalStudents>0 ? ((excellentCount/totalStudents)*100).toFixed(1) : 0) + '%</div><div class="label">优秀率</div></div>';
+                document.getElementById('statsRankTable').innerHTML = buildTable(
+                    ['排名','学号','姓名','班级','总分'], rows, []
+                );
+            });
+            // Load class compare
+            api('GET', '/api/stats/class-compare?exam_id=' + examId).then(function(d) {
+                if (!d.success) return;
+                var rows = d.data.map(function(c) {
+                    return { 班级: c.class, 人数: c.count, 平均分: c.average, 优秀率: c.excellent_rate + '%', 及格率: c.pass_rate + '%', 最高: c.max, 最低: c.min };
+                });
+                document.getElementById('statsClassTable').innerHTML = buildTable(
+                    ['班级','人数','平均分','优秀率','及格率','最高','最低'], rows, []
+                );
+            });
+            // Load distribution
+            api('GET', '/api/stats/distribution?exam_id=' + examId).then(function(d) {
+                if (!d.success) return;
+                var rows = d.data.map(function(r) { return { 分数段: r.range, 人数: r.count }; });
+                document.getElementById('statsDistTable').innerHTML = buildTable(
+                    ['分数段','人数'], rows, []
+                );
+            });
+            // Load warnings
+            api('GET', '/api/stats/warnings').then(function(d) {
+                if (!d.success) return;
+                var rows = d.data.map(function(w) {
+                    return { 学生: w.student_name, 班级: w.class, 考试: w.exam_name, 科目: w.subject, 分数: w.score, 满分: w.full };
+                });
+                document.getElementById('statsWarnTable').innerHTML = buildTable(
+                    ['学生','班级','考试','科目','分数','满分'], rows, []
+                );
             });
         }
 
         // ====== 操作日志 ======
         var logPage = 1;
         function loadLogs() {
-            api('GET', '/api/logs?page=' + logPage + '&size=30').then(function(d) {
+            api('GET', '/api/logs?page=' + logPage + '&size=50').then(function(d) {
                 if (!d.success) return;
-                var rows = d.data.map(function(l) {
-                    return { 用户: l.user, 操作: l.action, 时间: l.timestamp };
+                if (!d.data || !d.data.data) {
+                    document.getElementById('logsTable').innerHTML = '<p style="color:#999;text-align:center;padding:40px;">暂无操作日志</p>';
+                    return;
+                }
+                var rows = d.data.data.map(function(l) {
+                    return { 用户: l.user, 操作: l.action, 详情: l.detail, 时间: l.time };
                 });
-                document.getElementById('logsTable').innerHTML = buildTable(['用户','操作','时间'], rows);
+                document.getElementById('logsTable').innerHTML = buildTable(
+                    ['用户','操作','详情','时间'], rows, []
+                );
             });
         }
 

@@ -46,8 +46,10 @@
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 if (data.success) {
-                    if (data.data.role === 'admin' || data.data.role === 'teacher') {
+                    if (data.data.role === 'admin') {
                         window.location.href = 'admin.html';
+                    } else if (data.data.role === 'teacher') {
+                        window.location.href = 'teacher.html';
                     } else {
                         window.location.href = 'student.html';
                     }
@@ -78,6 +80,8 @@
                     localStorage.setItem('user', JSON.stringify(data.data));
                     if (data.data.role === 'admin') {
                         window.location.href = 'admin.html';
+                    } else if (data.data.role === 'teacher') {
+                        window.location.href = 'teacher.html';
                     } else {
                         window.location.href = 'student.html';
                     }
