@@ -14,10 +14,13 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 
 set(SOURCES
     src/main.cpp
-    src/utils.cpp
+    src/utils_base.cpp
+    src/utils_json.cpp
     src/storage.cpp
     src/models.cpp
-    src/handlers.cpp
+    src/handlers_auth.cpp
+    src/handlers_stu.cpp
+    src/handlers_grade.cpp
     src/stats.cpp
     src/sort.cpp
     src/server.cpp

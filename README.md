@@ -552,6 +552,36 @@ grades.csv scores 列:    120|135|110|85|92
 
 ---
 
+## 小组分工建议（5人）
+
+项目共 11 个 .cpp 文件，按技能领域分配，每人负责独立的模块组合：
+
+| 组员 | 文件 | ~行数 | 核心技能 |
+|------|------|:--:|------|
+| **A** | `models.cpp` + `storage.cpp` + `sort.cpp` | ~605 | OOP类继承、fstream文件读写、排序算法（冒泡/选择/快排） |
+| **B** | `handlers_auth.cpp` + `handlers_stu.cpp` | ~530 | 密码认证与哈希、Token会话管理、CRUD业务逻辑 |
+| **C** | `handlers_grade.cpp` + `stats.cpp` | ~729 | 成绩加权计算、CSV导入导出、排名与统计分析 |
+| **D** | `server.cpp` + `utils_base.cpp` + `utils_json.cpp` | ~736 | Socket网络编程、HTTP协议解析、JSON字符串拼接 |
+| **E** | `main.cpp` | ~503 | 系统集成、路由设计、种子数据生成、跨平台代码 |
+
+### 文件说明
+
+| 文件 | 作用 | 负责 |
+|------|------|:--:|
+| `models.cpp` | OOP类：Person→Admin/Student、Exam、Grade | A |
+| `storage.cpp` | CSV文件读写：fstream增删改查 | A |
+| `sort.cpp` | 手写冒泡排序、选择排序、快速排序 | A |
+| `handlers_auth.cpp` | API：登录、改密、Token验证、用户CRUD、日志 | B |
+| `handlers_stu.cpp` | API：学生CRUD、班级CRUD、科目管理 | B |
+| `handlers_grade.cpp` | API：考试CRUD、成绩录入导出、补考锁定 | C |
+| `stats.cpp` | 统计分析：排名、班级对比、分布、趋势、预警 | C |
+| `server.cpp` | WinSock/POSIX HTTP服务器：socket→bind→listen→accept | D |
+| `utils_base.cpp` | 基础工具：哈希、Token、时间、字符串、数学 | D |
+| `utils_json.cpp` | JSON工具：转义、响应构建、URL解析、日志 | D |
+| `main.cpp` | 入口：种子数据生成、if-else路由分发、启动服务 | E |
+
+---
+
 ## 学习建议
 
 如果你是 C++ 初学者，建议按以下顺序阅读理解代码：
