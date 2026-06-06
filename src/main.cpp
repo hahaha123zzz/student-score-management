@@ -7,6 +7,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <cstdlib>
 
 // ============================================================
 // 【跨平台路径】获取可执行文件所在目录
@@ -513,8 +514,11 @@ static std::string route(const std::string& method, const std::string& path, con
 //   5. server::start()     → 启动 HTTP 服务器（阻塞，永不返回）
 // ============================================================
 int main() {
-    // 设置控制台编码为 UTF-8，防止中文乱码
+    // 设置控制台编码为 UTF-8，防止 Windows 命令行中文乱码
+    // macOS/Linux 终端默认就是 UTF-8，不需要额外设置
+#ifdef _WIN32
     SetConsoleOutputCP(CP_UTF8);
+#endif
 
     // 第1步：初始化测试数据（如果 data/ 目录为空）
     seedFullData();
