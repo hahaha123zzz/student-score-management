@@ -575,7 +575,7 @@ grades.csv scores 列:    120|135|110|85|92
 | `handlers_stu.cpp` | API：学生CRUD、班级CRUD、科目管理 | B |
 | `handlers_grade.cpp` | API：考试CRUD、成绩录入导出、补考锁定 | C |
 | `stats.cpp` | 统计分析：排名、班级对比、分布、趋势、预警 | C |
-| `server.cpp` | WinSock/POSIX HTTP服务器：socket→bind→listen→accept | D |
+| `server.cpp` | WinSock HTTP服务器：socket→bind→listen→accept | D |
 | `utils_base.cpp` | 基础工具：哈希、Token、时间、字符串、数学 | D |
 | `utils_json.cpp` | JSON工具：转义、响应构建、URL解析、日志 | D |
 | `main.cpp` | 入口：种子数据生成、if-else路由分发、启动服务 | E |
@@ -586,13 +586,14 @@ grades.csv scores 列:    120|135|110|85|92
 
 如果你是 C++ 初学者，建议按以下顺序阅读理解代码：
 
-1. **先看 `utils.h` / `utils.cpp`** — 理解基础工具函数的写法（哈希、字符串处理、JSON字符串拼接）
+1. **先看 `utils.h` + `utils_base.cpp` + `utils_json.cpp`** — 理解基础工具函数（哈希、Token、JSON字符串拼接）
 2. **再看 `sort.h` / `sort.cpp`** — 理解手写的冒泡、选择、快速排序三种算法
 3. **然后看 `storage.h` / `storage.cpp`** — 理解 fstream 文件读写和 CSV 格式解析
 4. **接着看 `models.h` / `models.cpp`** — 理解 OOP 的类定义、封装、继承（Person→Admin/Student）
-5. **再接着看 `handlers.h` / `handlers.cpp`** — 理解真实的 CRUD 业务逻辑怎么写
-6. **然后看 `stats.h` / `stats.cpp`** — 理解统计分析算法（排名、对比、分布、预警）
-7. **再看 `server.h` / `server.cpp`** — 理解 WinSock 网络编程（Socket、bind、listen、accept）
-8. **最后看 `main.cpp`** — 理解程序入口、路由分发、种子数据生成
+5. **再接着看 `handlers.h` + `handlers_auth.cpp`** — 理解登录认证和用户管理
+6. **再看 `handlers_stu.cpp` + `handlers_grade.cpp`** — 理解学生/班级/考试/成绩的 CRUD
+7. **然后看 `stats.h` / `stats.cpp`** — 理解统计分析算法（排名、对比、分布、预警）
+8. **再看 `server.h` / `server.cpp`** — 理解 WinSock 网络编程（Socket、bind、listen、accept）
+9. **最后看 `main.cpp`** — 理解程序入口、路由分发、种子数据生成
 
 每个文件都使用初学者友好的写法：没有 lambda 表达式、没有模板、没有智能指针、没有虚函数。所有代码都有详细的中文注释，建议一边看代码一边看注释。
