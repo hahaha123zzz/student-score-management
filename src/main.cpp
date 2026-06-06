@@ -7,7 +7,29 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <windows.h>
+
+// ============================================================
+// 【跨平台路径】获取可执行文件所在目录
+// ============================================================
+// 程序需要知道自己的位置，才能找到 web/ 前端文件目录。
+// 不同操作系统获取程序路径的方法完全不同：
+//   Windows：GetModuleFileNameA() 获取 exe 完整路径
+//   macOS：  _NSGetExecutablePath() 获取程序路径
+//   Linux：  读取 /proc/self/exe 符号链接
+// ============================================================
+#ifdef _WIN32
+    #include <windows.h>       // GetModuleFileNameA / MAX_PATH
+    #define PATH_SEPARATOR "\\"
+#elif defined(__APPLE__)
+    #include <mach-o/dyld.h>   // _NSGetExecutablePath
+    #include <limits.h>        // PATH_MAX
+    #include <stdlib.h>        // realpath
+    #define PATH_SEPARATOR "/"
+#else
+    #include <unistd.h>        // readlink
+    #include <limits.h>        // PATH_MAX
+    #define PATH_SEPARATOR "/"
+#endif
 
 // ============================================================
 // 【系统初始化】seedFullData —— 生成模拟测试数据
@@ -498,15 +520,37 @@ int main() {
     seedFullData();
 
     // 第2步：计算 web 静态文件目录路径
-    // 假设 exe 位于 D:\project\bin\app.exe
-    // 则 webDir = D:\project\bin\web
+    // 不同操作系统获取程序路径的方式不同：
+    //   Windows：GetModuleFileNameA 获取 exe 完整路径
+    //   macOS：_NSGetExecutablePath 获取程序路径，realpath 解析符号链接
+    //   Linux：readlink 读取 /proc/self/exe 符号链接
+    std::string exeDir;
+#ifdef _WIN32
     char exePath[MAX_PATH];
-    GetModuleFileNameA(NULL, exePath, MAX_PATH);     // 获取 exe 完整路径
-    std::string exeDir(exePath);
-    size_t lastSlash = exeDir.find_last_of("\\/");   // 找到最后一个 \ 或 /
+    GetModuleFileNameA(NULL, exePath, MAX_PATH);
+    exeDir = std::string(exePath);
+#elif defined(__APPLE__)
+    char exePath[PATH_MAX];
+    uint32_t bufSize = PATH_MAX;
+    if (_NSGetExecutablePath(exePath, &bufSize) == 0) {
+        char* resolved = realpath(exePath, NULL);
+        exeDir = std::string(resolved ? resolved : exePath);
+        if (resolved) free(resolved);
+    }
+#else  // Linux
+    char exePath[PATH_MAX];
+    ssize_t len = readlink("/proc/self/exe", exePath, sizeof(exePath) - 1);
+    if (len != -1) {
+        exePath[len] = '\0';
+        exeDir = std::string(exePath);
+    }
+#endif
+    // 去掉可执行文件名，只保留目录部分
+    size_t lastSlash = exeDir.find_last_of("\\/");
     if (lastSlash != std::string::npos)
-        exeDir = exeDir.substr(0, lastSlash);         // 去掉文件名，保留目录
-    std::string webDir = exeDir + "\\web";            // 拼接 web 子目录
+        exeDir = exeDir.substr(0, lastSlash);
+    // Windows 用反斜杠，macOS/Linux 用正斜杠
+    std::string webDir = exeDir + PATH_SEPARATOR + "web";
 
     // 第3步：注册路由处理函数
     // g_handler 是函数指针，指向 route 函数

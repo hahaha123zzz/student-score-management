@@ -23,8 +23,22 @@
 #include <algorithm>
 #include <map>
 #include <cstdlib>
-#include <direct.h>
-#include <io.h>
+
+// ============================================================
+// 【跨平台文件操作】Windows vs macOS/Linux
+// ============================================================
+// 不同操作系统对文件和目录的操作函数不同：
+//   - 检查文件是否存在：Windows 用 _access, POSIX 用 access
+//   - 创建目录：Windows 用 _mkdir (仅目录名), POSIX 用 mkdir (需加权限)
+//   - 获取本地时间：Windows 用 localtime_s, POSIX 用 localtime_r
+// ============================================================
+#ifdef _WIN32
+    #include <direct.h>    // _mkdir
+    #include <io.h>        // _access
+#else
+    #include <sys/stat.h>  // mkdir / access
+    #include <unistd.h>    // access
+#endif
 
 namespace utils {
 
@@ -45,10 +59,15 @@ namespace utils {
      *   _mkdir(path)      — Windows API，创建目录
      */
     void ensureDataDir() {
-        // 检查 DATA_DIR 目录是否存在；_access 返回非 0 表示不存在
+        // Windows：_access 检查目录是否存在，_mkdir 创建目录
+        // macOS/Linux：access(F_OK) 检查存在，mkdir(path, 0755) 创建（0755=用户可读写执行，组和其他只读执行）
+#ifdef _WIN32
         if (_access(DATA_DIR.c_str(), 0) != 0) {
-            // 目录不存在，调用 _mkdir 创建
             _mkdir(DATA_DIR.c_str());
+#else
+        if (access(DATA_DIR.c_str(), F_OK) != 0) {
+            mkdir(DATA_DIR.c_str(), 0755);
+#endif
         }
     }
 
@@ -59,8 +78,13 @@ namespace utils {
      *   返回：true 存在 / false 不存在
      */
     bool fileExists(const std::string& path) {
-        // _access 返回 0 = 文件可访问（存在）
+        // Windows：_access(path, 0) 检查文件是否存在
+        // macOS/Linux：access(path, F_OK) 检查文件是否存在
+#ifdef _WIN32
         return _access(path.c_str(), 0) == 0;
+#else
+        return access(path.c_str(), F_OK) == 0;
+#endif
     }
 
     // =================================================================
@@ -225,14 +249,18 @@ namespace utils {
      * localtime_s 是 localtime 的安全版本（Windows/MSVC 推荐）。
      */
     std::string getCurrentTime() {
-        time_t t = time(NULL);                 // 获取当前时间戳（1970年以来的秒数）
-        struct tm timeinfo;                    // tm 结构体：年、月、日、时、分、秒
-        localtime_s(&timeinfo, &t);            // 转为本地时间（Windows 安全版本）
-        char buf[32];                          // 临时字符数组存放格式化结果
-        // strftime: 按格式将时间写入字符数组
-        // %Y=年四位数, %m=月(01-12), %d=日, %H=时(24h), %M=分, %S=秒
+        time_t t = time(NULL);
+        struct tm timeinfo;
+        // Windows：localtime_s（安全版本，参数顺序是(&tm, &time_t)）
+        // macOS/Linux：localtime_r（POSIX 版本，参数顺序是(&time_t, &tm)）
+#ifdef _WIN32
+        localtime_s(&timeinfo, &t);
+#else
+        localtime_r(&t, &timeinfo);
+#endif
+        char buf[32];
         strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &timeinfo);
-        return std::string(buf);               // char[] 转 std::string
+        return std::string(buf);
     }
 
     // =================================================================

@@ -1,29 +1,45 @@
 #include "server.h"
-#include <winsock2.h>
 #include <iostream>
 #include <fstream>
 #include <sstream>
 
 // ============================================================
-// 【前置知识】什么是 WinSock？
+// 【跨平台网络编程】不同操作系统的 Socket API
 // ============================================================
-// WinSock（Windows Sockets）是 Windows 系统上的网络编程接口，
-// 让 C++ 程序可以通过 TCP/IP 协议在网络中收发数据。
+// Windows 使用 WinSock2，需要链接 ws2_32.lib
+//   - WSAStartup() / WSACleanup()：初始化和清理
+//   - closesocket()：关闭连接
+//   - SOCKET 是无符号整数类型
 //
-// 类比理解：打电话的流程
-//   1. 安装电话线（WSAStartup）    —— 初始化 WinSock 库
-//   2. 买一部电话机（socket）       —— 创建套接字
-//   3. 分配电话号码（bind）         —— 绑定 IP 地址和端口
-//   4. 开机等电话（listen）         —— 进入监听状态
-//   5. 拿起听筒（accept）           —— 接受客户端连接
-//   6. 听对方说话（recv）           —— 接收数据
-//   7. 向对方说话（send）           —— 发送数据
-//   8. 挂断电话（closesocket）      —— 关闭连接
+// macOS / Linux 使用 POSIX（Berkeley）Socket
+//   - 头文件：<sys/socket.h> <netinet/in.h> <arpa/inet.h> <unistd.h>
+//   - 不需要初始化和清理
+//   - 直接用 close() 关闭连接（因为 socket 也是文件描述符）
+//   - SOCKET 就是 int 类型
 //
-// 本文件实现了一个最简 HTTP 服务器，可以响应浏览器请求。
+// 核心 API（socket / bind / listen / accept / recv / send）在两种系统上
+// 名称和用法完全相同，所以业务代码不用改，只需处理头文件和类型定义。
 // ============================================================
 
-#pragma comment(lib, "ws2_32.lib")   // 链接 WinSock 静态库
+#ifdef _WIN32
+    // Windows：使用 WinSock2
+    #include <winsock2.h>
+    #pragma comment(lib, "ws2_32.lib")   // 自动链接 WinSock 库
+    #define CLOSE_SOCKET(s) closesocket(s)
+    // SOCKET 类型在 <winsock2.h> 中已定义（无符号整数）
+    // INVALID_SOCKET 和 SOCKET_ERROR 也已定义
+#else
+    // macOS / Linux：使用 POSIX Socket（Berkeley sockets）
+    #include <sys/socket.h>      // socket / bind / listen / accept 等函数
+    #include <netinet/in.h>      // sockaddr_in 结构体（IPv4 地址）
+    #include <arpa/inet.h>       // htons / htonl 字节序转换函数
+    #include <unistd.h>          // close 函数
+    #define CLOSE_SOCKET(s) close(s)
+    // POSIX 中 socket 返回 int，-1 表示错误
+    typedef int SOCKET;
+    #define INVALID_SOCKET (-1)
+    #define SOCKET_ERROR   (-1)
+#endif
 
 namespace server {
 
@@ -133,20 +149,25 @@ namespace server {
     }
 
     // 读取前端静态文件（HTML / CSS / JS / JSON），从磁盘加载到内存并返回内容
+    // 路径分隔符：Windows 用 \，macOS/Linux 用 /
     static std::string readStaticFile(const std::string& urlPath) {
+#ifdef _WIN32
+        const char SEP = '\\';
+#else
+        const char SEP = '/';
+#endif
         if (urlPath == "/") {
-            // 访问根路径时默认返回登录页面
-            std::string fpath = g_webDir + "\\login.html";
+            std::string fpath = g_webDir + SEP + "login.html";
             std::ifstream f(fpath, std::ios::binary);
             if (f.is_open()) {
                 std::string content((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
                 return content;
             }
         }
-        // 将 URL 路径中的 / 转换为 Windows 的 \，拼接完整文件路径
-        std::string fpath = g_webDir + "\\";
+        // 将 URL 路径拼接到 web 目录下，URL 中的 / 替换为平台路径分隔符
+        std::string fpath = g_webDir + SEP;
         for (size_t i = 1; i < urlPath.size(); i++) {
-            if (urlPath[i] == '/') fpath += '\\';
+            if (urlPath[i] == '/') fpath += SEP;
             else fpath += urlPath[i];
         }
         std::ifstream f(fpath, std::ios::binary);
@@ -171,17 +192,17 @@ namespace server {
         g_webDir = webDir;
 
         // =====================================================
-        // 第1步：WSAStartup —— 初始化 WinSock 库
+        // 第1步：初始化网络库（仅 Windows 需要）
         // =====================================================
-        // 类似 "安装电话线"，必须在使用任何 Socket 函数前调用
-        // MAKEWORD(2,2) 表示请求使用 WinSock 2.2 版本
-        // wsaData 接收初始化信息
-        // 返回 0 表示成功，非 0 表示失败
+        // Windows：WSAStartup 初始化 WinSock 库，必须在任何 Socket 操作前调用
+        // macOS/Linux：POSIX socket 不需要初始化，直接可用
+#ifdef _WIN32
         WSADATA wsaData;
         if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
             std::cerr << "WSAStartup failed" << std::endl;
             return;
         }
+#endif
 
         // =====================================================
         // 第2步：socket —— 创建套接字（"买一部电话机"）
@@ -194,7 +215,9 @@ namespace server {
         SOCKET serverSocket = socket(AF_INET, SOCK_STREAM, 0);
         if (serverSocket == INVALID_SOCKET) {
             std::cerr << "socket failed" << std::endl;
+#ifdef _WIN32
             WSACleanup();
+#endif
             return;
         }
 
@@ -217,8 +240,10 @@ namespace server {
 
         if (bind(serverSocket, (sockaddr*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR) {
             std::cerr << "bind failed" << std::endl;
-            closesocket(serverSocket);
+            CLOSE_SOCKET(serverSocket);
+#ifdef _WIN32
             WSACleanup();
+#endif
             return;
         }
 
@@ -229,8 +254,10 @@ namespace server {
         // 此时服务器开始等待客户端（浏览器）的连接请求
         if (listen(serverSocket, SOMAXCONN) == SOCKET_ERROR) {
             std::cerr << "listen failed" << std::endl;
-            closesocket(serverSocket);
+            CLOSE_SOCKET(serverSocket);
+#ifdef _WIN32
             WSACleanup();
+#endif
             return;
         }
 
@@ -255,7 +282,7 @@ namespace server {
             // TCP 是流协议，一次 recv() 可能只收到部分数据（头部和体可能分两次到达）
             // 因此需要循环接收，直到收到完整请求
             int bytes = recv(clientSocket, recvBuf, sizeof(recvBuf) - 1, 0);
-            if (bytes <= 0) { closesocket(clientSocket); continue; }
+            if (bytes <= 0) { CLOSE_SOCKET(clientSocket); continue; }
             recvBuf[bytes] = '\0';
             std::string rawRequest(recvBuf, bytes);
 
@@ -376,13 +403,15 @@ namespace server {
             // 最后一个参数 0 表示默认行为（阻塞发送）
             send(clientSocket, response.c_str(), (int)response.size(), 0);
 
-            // ----- closesocket：关闭与该客户端的连接（"挂断电话"）-----
-            closesocket(clientSocket);
+            // ----- close：关闭与该客户端的连接（"挂断电话"）-----
+            CLOSE_SOCKET(clientSocket);
         }
 
         // 程序退出时（实际上永远不会执行到这里，因为 while(true) 无限循环）
-        closesocket(serverSocket);
-        WSACleanup();   // 清理 WinSock 库，释放系统资源
+        CLOSE_SOCKET(serverSocket);
+#ifdef _WIN32
+        WSACleanup();   // Windows：清理 WinSock 库，释放系统资源
+#endif                  // macOS/Linux：不需要清理
     }
 
 }

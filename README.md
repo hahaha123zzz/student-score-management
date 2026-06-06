@@ -39,13 +39,13 @@
 
 ## 技术栈
 
-| 层     | 技术                     | 说明                      |
-| ------ | ------------------------ | ------------------------- |
-| 语言   | C++11                    | 基础编程语言              |
-| HTTP   | WinSock2（自写）          | 用 Socket 构建 HTTP 服务  |
-| 存储   | CSV 文件（fstream）       | 纯文本表格格式，无需数据库 |
-| 前端   | 原生 HTML + CSS + JS     | 无需前端框架              |
-| 构建   | MSVC cl.exe / CMake      | Windows 平台              |
+| 层     | 技术                        | 说明                      |
+| ------ | --------------------------- | ------------------------- |
+| 语言   | C++11                       | 基础编程语言              |
+| HTTP   | 自写 Socket（WinSock/POSIX）| 用 Socket 构建 HTTP 服务  |
+| 存储   | CSV 文件（fstream）          | 纯文本表格格式，无需数据库 |
+| 前端   | 原生 HTML + CSS + JS        | 无需前端框架              |
+| 构建   | CMake / g++ / MSVC          | 跨平台（Windows/macOS/Linux）|
 
 **零第三方依赖**，所有功能用 C++ 标准库 + 系统自带的 WinSock2 实现。
 
@@ -62,7 +62,24 @@
 ```bash
 cmake -B build
 cmake --build build
+# Windows
 build\edugrade.exe
+# macOS / Linux
+./build/edugrade
+```
+
+### 方式三：手动编译
+
+**Windows（MSVC）：** 打开 Developer Command Prompt
+
+```cmd
+cl /EHsc /utf-8 src\*.cpp /I include /Fe:edugrade.exe ws2_32.lib
+```
+
+**macOS / Linux（g++）：**
+
+```bash
+g++ -std=c++11 -o edugrade src/*.cpp -I include -lpthread
 ```
 
 ### 方式三：手动编译（MSVC）
@@ -516,9 +533,22 @@ grades.csv scores 列:    120|135|110|85|92
 ### Q: 编译报错怎么办？
 
 常见问题：
-- 找不到 `<winsock2.h>`：确认在 Windows 上使用 MSVC，并链接 `ws2_32.lib`
-- `_access` / `_mkdir` 未定义：确认在 Windows 上编译（这些是 Windows 特有 API）
-- C++11 特性不支持：确认编译器版本（VS2013+、GCC 4.8+）
+
+**Windows（MSVC）：**
+- 找不到 `<winsock2.h>`：确认使用 MSVC 编译器，并在 Visual Studio Developer Command Prompt 中编译
+- 链接错误：确认命令末尾有 `ws2_32.lib`
+
+**macOS（g++/clang）：**
+- 找不到 `<sys/socket.h>`：macOS 自带 POSIX socket 头文件，确认使用 g++ 或 clang++ 编译
+- `fatal error: 'mach-o/dyld.h' file not found`：确认在 macOS 上编译（这是 macOS 特有头文件）
+
+**Linux（g++）：**
+- 找不到 `<sys/socket.h>`：确认安装了 build-essential（`sudo apt install build-essential`）
+- 没有 `/proc/self/exe`：确认在标准 Linux 发行版上运行
+
+**通用：**
+- C++11 特性不支持：确认编译器版本（VS2013+、GCC 4.8+、Clang 3.3+）
+- 中文乱码：Windows 用 `/utf-8` 标志编译，macOS/Linux 默认 UTF-8
 
 ---
 
