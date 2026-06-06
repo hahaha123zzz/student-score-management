@@ -23,6 +23,7 @@
                 <label>角色</label>
                 <select id="role">
                     <option value="admin">管理员</option>
+                    <option value="teacher">教师</option>
                     <option value="student">学生</option>
                 </select>
             </div>
@@ -45,7 +46,7 @@
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 if (data.success) {
-                    if (data.data.role === 'admin') {
+                    if (data.data.role === 'admin' || data.data.role === 'teacher') {
                         window.location.href = 'admin.html';
                     } else {
                         window.location.href = 'student.html';

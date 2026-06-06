@@ -108,7 +108,7 @@ static void seedFullData() {
     // 二维数组，每行：[学号, 姓名, 出生日期, 班级, 性别, 入学日期, 水平等级]
     // 水平等级（第7个字段）：1=优等, 2=良好, 3=中等偏上, 4=中等, 5=中等偏下, 6=后进
     // 学号规律：S2024xxx=高一，S2025xxx=高二，S2026xxx=高三
-    std::string raw[50][7] = {
+    std::string raw[65][7] = {
         {"S2024001","张三","2007-03-15","高一1班","男","2024-09-01","1"},
         {"S2024002","李四","2007-04-20","高一1班","女","2024-09-01","2"},
         {"S2024003","王明","2007-05-10","高一1班","男","2024-09-01","3"},
@@ -158,6 +158,22 @@ static void seedFullData() {
         {"S2026014","靳悦","2007-07-20","高三3班","女","2024-09-01","5"},
         {"S2026015","长江","2007-08-25","高三3班","男","2024-09-01","1"},
         {"S2026016","黄河","2007-03-10","高三3班","女","2024-09-01","2"},
+        {"S2025016","姚华","2007-09-01","高二1班","男","2024-09-01","3"},
+        {"S2025017","蔡慧","2007-10-15","高二2班","女","2024-09-01","2"},
+        {"S2025018","沈刚","2007-11-20","高二3班","男","2024-09-01","4"},
+        {"S2025019","江莉","2007-12-25","高二3班","女","2024-09-01","1"},
+        {"S2025020","陶志","2008-01-10","高二2班","男","2024-09-01","5"},
+        {"S2025021","曹楠","2008-02-15","高二1班","女","2024-09-01","3"},
+        {"S2026017","杨涛","2007-09-01","高三1班","男","2024-09-01","2"},
+        {"S2026018","冯宁","2007-10-15","高三2班","女","2024-09-01","4"},
+        {"S2026019","田磊","2007-11-20","高三3班","男","2024-09-01","1"},
+        {"S2026020","龙静","2007-12-25","高三1班","女","2024-09-01","5"},
+        {"S2026021","万强","2008-01-10","高三2班","男","2024-09-01","3"},
+        {"S2026022","石娜","2008-02-15","高三3班","女","2024-09-01","2"},
+        {"S2026023","范明","2007-09-01","高三1班","男","2024-09-01","4"},
+        {"S2026024","吴芳","2007-10-15","高三2班","女","2024-09-01","1"},
+        {"S2026025","卢伟","2007-11-20","高三3班","男","2024-09-01","3"},
+        {"S2026026","倪雪","2007-12-25","高三1班","女","2024-09-01","5"},
     };
 
     // 分别检查 students.csv 和 users.csv 是否需要创建
@@ -176,13 +192,13 @@ static void seedFullData() {
         userData.push_back({"id","name","password","role","phone","created_at"});
         // 创建 4 个管理员/教师账号（密码统一为 123456 的哈希值）
         userData.push_back({"admin","系统管理员",utils::hashPassword("123456"),"admin","","2024-09-01"});
-        userData.push_back({"T001","张明老师",utils::hashPassword("123456"),"admin","","2024-09-01"});
-        userData.push_back({"T002","李华老师",utils::hashPassword("123456"),"admin","","2024-09-01"});
-        userData.push_back({"T003","王芳老师",utils::hashPassword("123456"),"admin","","2024-09-01"});
+        userData.push_back({"T001","张明老师",utils::hashPassword("123456"),"teacher","","2024-09-01"});
+        userData.push_back({"T002","李华老师",utils::hashPassword("123456"),"teacher","","2024-09-01"});
+        userData.push_back({"T003","王芳老师",utils::hashPassword("123456"),"teacher","","2024-09-01"});
     }
 
-    // 遍历 34 名学生的原始数据，同时生成 students.csv 和 users.csv 的行
-    for (int i = 0; i < 34; i++) {
+    // 遍历 65 名学生的原始数据，同时生成 students.csv 和 users.csv 的行
+    for (int i = 0; i < 65; i++) {
         if (needStudents) {
             std::vector<std::string> row;
             for (int j = 0; j < 6; j++) row.push_back(raw[i][j]);   // 取前 6 个字段
@@ -243,8 +259,8 @@ static void seedFullData() {
             // 将科目字符串拆分为数组，如 ["语文","数学","英语","物理","化学"]
             std::vector<std::string> subList = utils::split(examSubs[ei], '|');
 
-            // 内循环：遍历 50 名学生（si = 0, 1, ..., 49）
-            for (int si = 0; si < 34; si++) {
+            // 内循环：遍历 65 名学生（si = 0, 1, ..., 64）
+            for (int si = 0; si < 65; si++) {
                 // 获取该学生的水平等级（1~6）
                 int level = std::stoi(raw[si][6]);
                 // 基准百分比：level 1→95%, level 2→85%, ..., level 6→45%
@@ -360,13 +376,19 @@ static std::string route(const std::string& method, const std::string& path, con
         return handlers::getUsers();
     }
     if (path == "/api/users" && method == "POST") {
+        if (!handlers::isAdmin(token))
+            return utils::errorResponse("权限不足");
         return handlers::addUser(body);
     }
     std::string uid = extractId(path, "/api/users");
     if (!uid.empty() && method == "PUT") {
+        if (!handlers::isAdmin(token))
+            return utils::errorResponse("权限不足");
         return handlers::updateUser(uid, body);
     }
     if (!uid.empty() && method == "DELETE") {
+        if (!handlers::isAdmin(token))
+            return utils::errorResponse("权限不足");
         return handlers::deleteUser(uid);
     }
 
@@ -376,13 +398,19 @@ static std::string route(const std::string& method, const std::string& path, con
         return handlers::getStudents(queryString);
     }
     if (path == "/api/students" && method == "POST") {
+        if (!handlers::isAdmin(token))
+            return utils::errorResponse("权限不足");
         return handlers::addStudent(body);
     }
     std::string sid = extractId(path, "/api/students");
     if (!sid.empty() && method == "PUT") {
+        if (!handlers::isAdmin(token))
+            return utils::errorResponse("权限不足");
         return handlers::updateStudent(sid, body);
     }
     if (!sid.empty() && method == "DELETE") {
+        if (!handlers::isAdmin(token))
+            return utils::errorResponse("权限不足");
         return handlers::deleteStudent(sid);
     }
 
@@ -391,13 +419,19 @@ static std::string route(const std::string& method, const std::string& path, con
         return handlers::getClasses();
     }
     if (path == "/api/classes" && method == "POST") {
+        if (!handlers::isAdmin(token))
+            return utils::errorResponse("权限不足");
         return handlers::addClass(body);
     }
     std::string cid = extractId(path, "/api/classes");
     if (!cid.empty() && method == "PUT") {
+        if (!handlers::isAdmin(token))
+            return utils::errorResponse("权限不足");
         return handlers::updateClass(cid, body);
     }
     if (!cid.empty() && method == "DELETE") {
+        if (!handlers::isAdmin(token))
+            return utils::errorResponse("权限不足");
         return handlers::deleteClass(cid);
     }
 
@@ -406,7 +440,20 @@ static std::string route(const std::string& method, const std::string& path, con
         return handlers::getSubjects();
     }
     if (path == "/api/subjects" && method == "POST") {
+        if (!handlers::isAdmin(token))
+            return utils::errorResponse("权限不足");
         return handlers::addSubject(body);
+    }
+    std::string subid = extractId(path, "/api/subjects");
+    if (!subid.empty() && method == "PUT") {
+        if (!handlers::isAdmin(token))
+            return utils::errorResponse("权限不足");
+        return handlers::updateSubject(subid, body);
+    }
+    if (!subid.empty() && method == "DELETE") {
+        if (!handlers::isAdmin(token))
+            return utils::errorResponse("权限不足");
+        return handlers::deleteSubject(subid);
     }
 
     // ===== 考试管理 =====
@@ -415,21 +462,31 @@ static std::string route(const std::string& method, const std::string& path, con
         return handlers::getExams(queryString);
     }
     if (path == "/api/exams" && method == "POST") {
+        if (!handlers::isAdmin(token))
+            return utils::errorResponse("权限不足");
         return handlers::addExam(body);
     }
     std::string eid = extractId(path, "/api/exams");
     // 路径中包含 "/publish"，如 /api/exams/EXAM1/publish
     if (eid.find("/publish") != std::string::npos) {
-        return handlers::publishExam(eid.substr(0, eid.size() - 8));   // 去掉 "/publish"
+        if (!handlers::isAdmin(token))
+            return utils::errorResponse("权限不足");
+        return handlers::publishExam(eid.substr(0, eid.size() - 8));
     }
     // 路径中包含 "/retract"，如 /api/exams/EXAM1/retract
     if (eid.find("/retract") != std::string::npos) {
-        return handlers::retractExam(eid.substr(0, eid.size() - 8));   // 去掉 "/retract"
+        if (!handlers::isAdmin(token))
+            return utils::errorResponse("权限不足");
+        return handlers::retractExam(eid.substr(0, eid.size() - 8));
     }
     if (!eid.empty() && method == "PUT") {
+        if (!handlers::isAdmin(token))
+            return utils::errorResponse("权限不足");
         return handlers::updateExam(eid, body);
     }
     if (!eid.empty() && method == "DELETE") {
+        if (!handlers::isAdmin(token))
+            return utils::errorResponse("权限不足");
         return handlers::deleteExam(eid);
     }
 
@@ -444,20 +501,28 @@ static std::string route(const std::string& method, const std::string& path, con
         return handlers::getGrades(queryString);
     }
     if (path == "/api/grades" && method == "POST") {
+        if (!handlers::isAdmin(token))
+            return utils::errorResponse("权限不足");
         return handlers::setGrades(body);
     }
     if (path == "/api/grades/import" && method == "POST") {
+        if (!handlers::isAdmin(token))
+            return utils::errorResponse("权限不足");
         return handlers::importCSV(body);
     }
     if (path == "/api/grades/export" && method == "GET") {
         return handlers::exportCSV(queryString);
     }
     if (path == "/api/grades/makeup" && method == "POST") {
+        if (!handlers::isAdmin(token))
+            return utils::errorResponse("权限不足");
         return handlers::markMakeup(body);
     }
     std::string gid = extractId(path, "/api/grades");
     if (gid.find("/lock") != std::string::npos) {
-        return handlers::lockGrades(gid.substr(0, gid.size() - 5));   // 去掉 "/lock"
+        if (!handlers::isAdmin(token))
+            return utils::errorResponse("权限不足");
+        return handlers::lockGrades(gid.substr(0, gid.size() - 5));
     }
     // 前缀匹配路径 /api/grades/student/...
     if (path.find("/api/grades/student/") == 0 && method == "GET") {
@@ -496,6 +561,8 @@ static std::string route(const std::string& method, const std::string& path, con
 
     // ===== 日志 =====
     if (path == "/api/logs" && method == "GET") {
+        if (!handlers::isAdmin(token))
+            return utils::errorResponse("权限不足");
         return handlers::getLogs(queryString);
     }
 

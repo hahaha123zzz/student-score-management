@@ -271,4 +271,37 @@ namespace handlers {
         return utils::jsonResponse(true, "科目添加成功", "{}");
     }
 
+    // ===================================================================
+    // 【更新科目】处理 PUT /api/subjects/{科目ID}
+    // 只更新 body 中提供的字段（name 或 full_score），未提供的字段保持原值
+    // ===================================================================
+    std::string updateSubject(const std::string& id, const std::string& body) {
+        std::vector<std::vector<std::string>> all = storage::getSubjects();
+        for (size_t i = 0; i < all.size(); i++) {
+            if (all[i][0] == id) {
+                std::string name = parseBodyField(body, "name");
+                std::string fullScoreStr = parseBodyField(body, "full_score");
+                if (!name.empty()) all[i][1] = name;
+                if (!fullScoreStr.empty()) all[i][2] = fullScoreStr;
+                storage::saveSubjects(all);
+                return utils::jsonResponse(true, "科目更新成功", "{}");
+            }
+        }
+        return utils::errorResponse("科目不存在");
+    }
+
+    // ===================================================================
+    // 【删除科目】处理 DELETE /api/subjects/{科目ID}
+    // ===================================================================
+    std::string deleteSubject(const std::string& id) {
+        std::vector<std::vector<std::string>> all = storage::getSubjects();
+        std::vector<std::vector<std::string>> filtered;
+        for (size_t i = 0; i < all.size(); i++) {
+            if (all[i][0] != id) filtered.push_back(all[i]);
+        }
+        if (filtered.size() == all.size()) return utils::errorResponse("科目不存在");
+        storage::saveSubjects(filtered);
+        return utils::jsonResponse(true, "科目已删除", "{}");
+    }
+
 }

@@ -47,7 +47,7 @@ namespace handlers {
     bool isAdmin(const std::string& token) {
         if (!utils::isTokenValid(token)) return false;     // token 无效直接返回 false
         std::string role = utils::getUserRoleByToken(token); // 根据 token 查询角色
-        return role == "admin";                             // 只有 "admin" 才返回 true
+        return role == "admin" || role == "teacher";        // admin 和 teacher 都有管理权限
     }
 
     // ===== 登录 =====

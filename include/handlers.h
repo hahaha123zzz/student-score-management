@@ -96,6 +96,12 @@ namespace handlers {
     // 输入：body = {"name":"科目名称", "full_score":150}
     std::string addSubject(const std::string& body);
 
+    // 更新科目 —— PUT /api/subjects/{科目ID}
+    std::string updateSubject(const std::string& id, const std::string& body);
+
+    // 删除科目 —— DELETE /api/subjects/{科目ID}
+    std::string deleteSubject(const std::string& id);
+
     // ===== 考试管理 =====
 
     // 获取考试列表（可按状态筛选）—— GET /api/exams?status=draft/published/locked

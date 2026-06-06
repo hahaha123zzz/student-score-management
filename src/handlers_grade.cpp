@@ -2,6 +2,7 @@
 #include "models.h"
 #include "storage.h"
 #include "utils.h"
+#include <sstream>
 
 namespace handlers {
 
@@ -257,7 +258,72 @@ namespace handlers {
     // 当前为预留接口，返回"开发中"提示
     // ===================================================================
     std::string importCSV(const std::string& body) {
-        return utils::errorResponse("CSV导入功能开发中");
+        std::string examId = parseBodyField(body, "exam_id");
+        std::string csvContent = parseBodyField(body, "csv");
+        if (examId.empty() || csvContent.empty())
+            return utils::errorResponse("考试ID和CSV内容不能为空");
+
+        std::vector<std::vector<std::string>> exams = storage::getExams();
+        std::vector<std::string> subjects;
+        for (size_t i = 0; i < exams.size(); i++) {
+            if (exams[i][0] == examId) {
+                subjects = utils::split(exams[i][4], '|');
+                break;
+            }
+        }
+        if (subjects.empty()) return utils::errorResponse("考试不存在");
+
+        std::istringstream stream(csvContent);
+        std::string line;
+        std::getline(stream, line);
+
+        int imported = 0, failed = 0;
+        while (std::getline(stream, line)) {
+            if (line.empty()) continue;
+
+            std::vector<std::string> parts;
+            std::string current;
+            for (size_t i = 0; i < line.size(); i++) {
+                if (line[i] == ',') { parts.push_back(current); current.clear(); }
+                else current += line[i];
+            }
+            parts.push_back(current);
+
+            if (parts.size() < 3) { failed++; continue; }
+
+            std::string studentId = parts[0];
+            std::string scores;
+            for (size_t i = 2; i < parts.size() && (i - 2) < subjects.size(); i++) {
+                if (i > 2) scores += "|";
+                scores += parts[i];
+            }
+
+            std::vector<std::vector<std::string>> grades = storage::getGrades();
+            bool found = false;
+            for (size_t i = 0; i < grades.size(); i++) {
+                if (grades[i][1] == studentId && grades[i][2] == examId) {
+                    grades[i][3] = scores;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                std::vector<std::string> row;
+                row.push_back(std::to_string(grades.size() + 1));
+                row.push_back(studentId);
+                row.push_back(examId);
+                row.push_back(scores);
+                row.push_back("false");
+                row.push_back("import");
+                row.push_back(utils::getCurrentTime());
+                grades.push_back(row);
+            }
+            storage::saveGrades(grades);
+            imported++;
+        }
+
+        std::string result = "{\"imported\":" + std::to_string(imported) + ",\"failed\":" + std::to_string(failed) + "}";
+        return utils::jsonResponse(true, "导入完成", result);
     }
 
     // ===================================================================
