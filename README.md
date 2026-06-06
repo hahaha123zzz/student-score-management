@@ -562,7 +562,7 @@ grades.csv scores 列:    120|135|110|85|92
 | **B** | `handlers_auth.cpp` + `handlers_stu.cpp` | ~530 | 密码认证与哈希、Token会话管理、CRUD业务逻辑 |
 | **C** | `handlers_grade.cpp` + `stats.cpp` | ~729 | 成绩加权计算、CSV导入导出、排名与统计分析 |
 | **D** | `server.cpp` + `utils_base.cpp` + `utils_json.cpp` | ~736 | Socket网络编程、HTTP协议解析、JSON字符串拼接 |
-| **E** | `main.cpp` | ~503 | 系统集成、路由设计、种子数据生成、跨平台代码 |
+| **E** | `main.cpp` | ~503 | 系统集成、路由设计、种子数据生成 |
 
 ### 文件说明
 
