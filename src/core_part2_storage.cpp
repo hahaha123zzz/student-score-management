@@ -239,10 +239,17 @@ void ensureSeedData() {
         "S2024010|何雨|女|2008-05-31|高一2班||2026-02-20 09:00:00"
     });
 
+    // 默认示例科目扩展为高中常见 9 科，便于直接录入更多考试科目。
     writeSeedIfMissing(SUBJECTS_FILE, std::vector<std::string>{
         "SUB1|语文|150",
         "SUB2|数学|150",
-        "SUB3|英语|150"
+        "SUB3|英语|150",
+        "SUB4|物理|100",
+        "SUB5|化学|100",
+        "SUB6|生物|100",
+        "SUB7|政治|100",
+        "SUB8|历史|100",
+        "SUB9|地理|100"
     });
 
     writeSeedIfMissing(EXAMS_FILE, std::vector<std::string>{
