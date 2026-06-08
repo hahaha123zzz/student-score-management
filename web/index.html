@@ -3,26 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
-  <title>EduGrade - 精准学情分析 · AI赋能的智能成绩管理平台</title>
-  <meta name="description" content="EduGrade 高中学生成绩管理系统 - 不止记录成绩，更深入分析'哪里学不会'和'为什么学不好'，为每位学生定制个性化成长路径">
-  <link rel="stylesheet" href="css/style.css?v=2">
-  <link rel="stylesheet" href="css/home.css?v=2">
+  <title>EduGrade - 高中学生成绩管理系统</title>
+  <link rel="stylesheet" href="css/style.css?v=4">
+  <link rel="stylesheet" href="css/home.css?v=4">
 </head>
 <body class="home-wrapper">
   <nav class="home-nav" id="homeNav">
-    <a href="home.html" class="home-nav-brand">
+    <a href="index.html" class="home-nav-brand">
       <span class="logo-icon">E</span>
       EduGrade
     </a>
     <div class="home-nav-links">
       <a href="#features">核心功能</a>
-      <a href="#data">平台数据</a>
-      <a href="#use-cases">使用场景</a>
+      <a href="#roles">用户角色</a>
+      <a href="#process">使用流程</a>
     </div>
-    <button onclick="window.location.href='login.html'" class="home-nav-cta" style="font-family:inherit;position:relative;z-index:999;cursor:pointer">进入系统</button>
+    <button onclick="window.location.href='login.html'" class="home-nav-cta" style="font-family:inherit;cursor:pointer">进入系统</button>
   </nav>
 
   <section class="hero">
@@ -30,46 +26,25 @@
     <div class="hero-float card1"></div>
     <div class="hero-float card2"></div>
     <div class="hero-float card3"></div>
-    <div class="hero-float card4"></div>
     <span class="hero-dot"></span>
     <span class="hero-dot"></span>
     <span class="hero-dot"></span>
-    <span class="hero-dot"></span>
-
     <div class="hero-content">
-      <div class="hero-badge">v2.0 全新升级 · AI 深度学情分析</div>
-      <h1>精准<span class="highlight">学情分析</span><br>AI赋能的智能成绩管理平台</h1>
-      <p class="hero-subtitle">不止记录成绩，更深入分析"哪里学不会"和"为什么学不好"，为每位学生定制个性化成长路径</p>
+      <div class="hero-badge">C++11 课程作业版 · 聚焦核心教学场景</div>
+      <h1>清晰、实用的<br><span class="highlight">高中生成绩管理系统</span></h1>
+      <p class="hero-subtitle">支持管理员和学生两种角色，完成学生信息管理、科目与考试管理、成绩录入、排序统计、班级排名和年级排名。</p>
       <div class="hero-buttons">
-        <button onclick="window.location.href='login.html'" class="hero-btn-primary" style="font-family:inherit;position:relative;z-index:999;cursor:pointer">
-          <span>进入系统</span>
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
-        <a href="#features" class="hero-btn-secondary">
-          了解更多
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v8M5 9l3 3 3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </a>
+        <button onclick="window.location.href='login.html'" class="hero-btn-primary" style="font-family:inherit;cursor:pointer">进入系统</button>
+        <a href="#features" class="hero-btn-secondary">查看功能</a>
       </div>
       <div class="hero-stats">
-        <div class="hero-stat">
-          <div class="hs-num">12+</div>
-          <div class="hs-label">学生</div>
-        </div>
+        <div class="hero-stat"><div class="hs-num">2</div><div class="hs-label">用户角色</div></div>
         <span class="hero-stat-divider"></span>
-        <div class="hero-stat">
-          <div class="hs-num">9</div>
-          <div class="hs-label">科目</div>
-        </div>
+        <div class="hero-stat"><div class="hs-num">4+</div><div class="hs-label">核心模块</div></div>
         <span class="hero-stat-divider"></span>
-        <div class="hero-stat">
-          <div class="hs-num">2</div>
-          <div class="hs-label">考试</div>
-        </div>
+        <div class="hero-stat"><div class="hs-num">TXT</div><div class="hs-label">文件持久化</div></div>
         <span class="hero-stat-divider"></span>
-        <div class="hero-stat">
-          <div class="hs-num">20+</div>
-          <div class="hs-label">错题分析</div>
-        </div>
+        <div class="hero-stat"><div class="hs-num">Web</div><div class="hs-label">网页交互</div></div>
       </div>
     </div>
   </section>
@@ -77,191 +52,97 @@
   <section class="section" id="features">
     <div class="section-header">
       <span class="section-label">核心功能</span>
-      <h2>一站式成绩管理与学情分析</h2>
-      <p>从成绩录入到深度分析，覆盖教学全场景的智能工具链</p>
+      <h2>围绕课程作业目标设计</h2>
+      <p>所有功能都服务于“学生、考试、成绩、排名、统计”这一条主线。</p>
     </div>
     <div class="features-grid">
       <div class="feature-card fi-1">
-        <div class="feature-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
-        </div>
-        <h3>智能成绩管理</h3>
-        <p>支持手动录入、CSV批量导入、Excel导出，自动计算排名与成绩等级，灵活配置各科满分与考试类型</p>
+        <div class="feature-icon">&#128100;</div>
+        <h3>学生信息管理</h3>
+        <p>管理员可以录入、修改、查询和删除学生信息，并按学号、姓名、班级进行筛选。</p>
       </div>
       <div class="feature-card fi-2">
-        <div class="feature-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
-        </div>
-        <h3>深度学情分析</h3>
-        <p>偏科诊断、能力雷达图、成绩趋势预测，多维度可视化呈现每个学生的学习状态与薄弱环节</p>
+        <div class="feature-icon">&#128218;</div>
+        <h3>科目与考试管理</h3>
+        <p>管理员维护科目和考试，设置每场考试包含哪些科目，形成完整的成绩录入依据。</p>
       </div>
       <div class="feature-card fi-3">
-        <div class="feature-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
-        </div>
-        <h3>智能错题本</h3>
-        <p>自动归因分类、知识图谱关联、复习提醒，帮助学生精准定位知识漏洞，高效刷题不再盲目</p>
+        <div class="feature-icon">&#128200;</div>
+        <h3>成绩录入与统计</h3>
+        <p>支持录入和修改各科成绩，自动计算总分、平均分，并显示各科等级与缺考情况。</p>
       </div>
       <div class="feature-card fi-4">
-        <div class="feature-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.66 3.63a9 9 0 1 0 4.68 17.41"/><path d="M12 2v4M4.22 10.96h4M18.36 6.64l-2.83 2.83M20.8 10.96h-4M17.01 18.01l-2.83-2.83"/></svg>
-        </div>
-        <h3>个性化学习建议</h3>
-        <p>基于AI的薄弱点诊断，智能生成针对性提分方案，为每个学生定制最优学习路径</p>
-      </div>
-      <div class="feature-card fi-5">
-        <div class="feature-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M16 13H8M16 17H8M10 9H8"/></svg>
-        </div>
-        <h3>成长档案</h3>
-        <p>历次考试成绩追踪、进步轨迹可视化、自动生成学情报告，完整记录每一位学生的成长历程</p>
-      </div>
-      <div class="feature-card fi-6">
-        <div class="feature-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        </div>
-        <h3>家校协同</h3>
-        <p>家长实时查看孩子成绩与学情分析，教师端可推送学习报告，构建家校共育的沟通桥梁</p>
+        <div class="feature-icon">&#127942;</div>
+        <h3>排名与导出</h3>
+        <p>支持按总分排序、按单科排序，同时提供班级排名、年级排名和成绩 CSV 导出。</p>
       </div>
     </div>
   </section>
 
-  <section class="section data-section" id="data">
+  <section class="section" id="roles">
     <div class="section-header">
-      <span class="section-label" style="color:rgba(255,255,255,.6)">平台数据</span>
-      <h2>用数据见证成长</h2>
-      <p>每一位学生的进步，每一次精准的分析，都在这里被记录</p>
-    </div>
-    <div class="data-grid">
-      <div class="data-card">
-        <div class="dc-num" data-count="12">0</div>
-        <div class="dc-label">注册学生数</div>
-      </div>
-      <div class="data-card">
-        <div class="dc-num" data-count="9">0</div>
-        <div class="dc-label">考试科目</div>
-      </div>
-      <div class="data-card">
-        <div class="dc-num" data-count="86">0</div>
-        <div class="dc-label">分析报告</div>
-      </div>
-      <div class="data-card">
-        <div class="dc-num" data-count="124">0</div>
-        <div class="dc-label">错题记录</div>
-      </div>
-    </div>
-  </section>
-
-  <section class="section" id="use-cases">
-    <div class="section-header">
-      <span class="section-label">使用场景</span>
-      <h2>为每一个角色而生</h2>
-      <p>无论您是教师、学生还是家长，EduGrade 都为您提供专属视角</p>
+      <span class="section-label">用户角色</span>
+      <h2>两个角色，职责清晰</h2>
+      <p>系统只保留管理员和学生两个核心角色，权限边界更清楚。</p>
     </div>
     <div class="use-grid">
       <div class="use-card">
-        <div class="use-avatar ua-teacher">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        </div>
-        <h3>教师</h3>
-        <div class="uc-role">高效教学管理</div>
-        <p>快速录入与管理全班成绩，一键生成排名与等级；通过学情分析精准定位班级共性问题，调整教学策略；自动生成学情报告，让家长会沟通有据可依</p>
+        <div class="use-avatar ua-teacher">&#128104;&#8205;&#127979;</div>
+        <h3>管理员</h3>
+        <div class="uc-role">教学管理视角</div>
+        <p>管理学生、科目、考试和成绩，查看排名统计，维护系统的基础数据和成绩数据。</p>
       </div>
       <div class="use-card">
-        <div class="use-avatar ua-student">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 3 3 6 3s6-1 6-3v-5"/></svg>
-        </div>
+        <div class="use-avatar ua-student">&#127891;</div>
         <h3>学生</h3>
-        <div class="uc-role">个性化学习伙伴</div>
-        <p>查看各科成绩趋势与排名变化，通过能力雷达图发现薄弱环节；智能错题本自动归类整理，针对性复习提升效率；获得 AI 生成的个性化学习建议与提分方案</p>
+        <div class="uc-role">个人学习视角</div>
+        <p>查看自己的成绩、总分、平均分、班级排名和年级排名，并修改自己的基础信息和密码。</p>
       </div>
-      <div class="use-card">
-        <div class="use-avatar ua-parent">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        </div>
-        <h3>家长</h3>
-        <div class="uc-role">实时学情关注</div>
-        <p>随时查看孩子的考试成绩与班级排名，了解各科学习情况与偏科倾向；接收教师推送的学情报告，科学参与孩子的学习成长过程</p>
-      </div>
+    </div>
+  </section>
+
+  <section class="section data-section" id="process">
+    <div class="section-header">
+      <span class="section-label" style="color:rgba(255,255,255,.7)">使用流程</span>
+      <h2>简单直接的使用方式</h2>
+      <p>输入数据、查看成绩、分析排名，过程清晰，适合演示和答辩。</p>
+    </div>
+    <div class="data-grid">
+      <div class="data-card"><div class="dc-num">1</div><div class="dc-label">登录系统</div></div>
+      <div class="data-card"><div class="dc-num">2</div><div class="dc-label">维护基础数据</div></div>
+      <div class="data-card"><div class="dc-num">3</div><div class="dc-label">录入考试成绩</div></div>
+      <div class="data-card"><div class="dc-num">4</div><div class="dc-label">查看统计与排名</div></div>
     </div>
   </section>
 
   <section class="cta-section">
     <h2>开始使用 EduGrade</h2>
-    <p>让数据驱动教学，用AI赋能成长</p>
-    <button onclick="window.location.href='login.html'" class="cta-btn" style="font-family:inherit;position:relative;z-index:999;cursor:pointer">
-      进入系统
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </button>
+    <p>用清晰的数据管理方式完成你的课程作业演示。</p>
+    <button onclick="window.location.href='login.html'" class="cta-btn" style="font-family:inherit;cursor:pointer">进入系统</button>
   </section>
 
   <footer class="home-footer">
     <div class="footer-brand">EduGrade</div>
-    <div class="footer-ver">高中学生成绩管理系统 v2.0</div>
-    <div style="margin-top:8px">&copy; 2026 EduGrade. All rights reserved.</div>
+    <div class="footer-ver">高中学生成绩管理系统</div>
+    <div style="margin-top:8px">&copy; 2026 EduGrade</div>
   </footer>
 
   <script>
-  (function() {
-    var nav = document.getElementById('homeNav');
-
-    window.addEventListener('scroll', function() {
-      if (window.scrollY > 20) {
-        nav.classList.add('scrolled');
-      } else {
-        nav.classList.remove('scrolled');
-      }
-    });
-
-    document.querySelectorAll('a[href^="#"]').forEach(function(a) {
-      a.addEventListener('click', function(e) {
-        var target = document.querySelector(this.getAttribute('href'));
-        if (target) {
-          e.preventDefault();
+    (function() {
+      var nav = document.getElementById('homeNav');
+      window.addEventListener('scroll', function() {
+        if (window.scrollY > 20) nav.classList.add('scrolled');
+        else nav.classList.remove('scrolled');
+      });
+      document.querySelectorAll('a[href^="#"]').forEach(function(link) {
+        link.addEventListener('click', function(event) {
+          var target = document.querySelector(this.getAttribute('href'));
+          if (!target) return;
+          event.preventDefault();
           target.scrollIntoView({ behavior: 'smooth' });
-        }
+        });
       });
-    });
-
-    var observer = new IntersectionObserver(function(entries) {
-      entries.forEach(function(entry) {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-        }
-      });
-    }, { threshold: 0.15 });
-
-    document.querySelectorAll('.feature-card, .use-card').forEach(function(el) {
-      observer.observe(el);
-    });
-
-    var dataObs = new IntersectionObserver(function(entries) {
-      entries.forEach(function(entry) {
-        if (entry.isIntersecting) {
-          var nums = entry.target.querySelectorAll('.dc-num');
-          nums.forEach(function(numEl) {
-            var target = parseInt(numEl.getAttribute('data-count'), 10);
-            var current = 0;
-            var step = Math.ceil(target / 40);
-            var interval = setInterval(function() {
-              current += step;
-              if (current >= target) {
-                current = target;
-                clearInterval(interval);
-              }
-              numEl.textContent = current;
-            }, 25);
-          });
-          dataObs.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.4 });
-
-    var dataSection = document.querySelector('.data-grid');
-    if (dataSection) {
-      dataObs.observe(dataSection);
-    }
-  })();
+    })();
   </script>
 </body>
 </html>
