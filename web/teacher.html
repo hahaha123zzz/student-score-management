@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>成绩管理系统 - 教师面板</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="header">
+        <h2>成绩管理系统 - 教师面板</h2>
+        <div class="header-right">
+            <span id="userInfo"></span>
+            <button onclick="changePassword()">修改密码</button>
+            <button onclick="logout()">退出登录</button>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('grades')">成绩管理</div>
+        <div class="tab" onclick="switchTab('rank')">排名查看</div>
+    </div>
+
+    <div class="content">
+        <!-- ====== 成绩管理 ====== -->
+        <div id="tab-grades" class="tab-content active">
+            <div class="toolbar">
+                <div>
+                    <select id="gradeExam" onchange="loadClassGrades()">
+                        <option value="">全部考试</option>
+                    </select>
+                </div>
+                <button class="btn-success" onclick="showGradeModal()">录入成绩</button>
+            </div>
+            <div id="classGradesTable"></div>
+            <div id="gradeSummary"></div>
+        </div>
+
+        <!-- ====== 排名查看 ====== -->
+        <div id="tab-rank" class="tab-content">
+            <div class="toolbar">
+                <div>
+                    <select id="rankExam" onchange="loadTeacherRank()">
+                        <option value="">选择考试</option>
+                    </select>
+                    <select id="rankSubject" onchange="loadTeacherRank()">
+                        <option value="">总分排名</option>
+                    </select>
+                    <select id="rankType" onchange="loadTeacherRank()">
+                        <option value="global">年级排名</option>
+                        <option value="class">班级排名</option>
+                    </select>
+                </div>
+            </div>
+            <div id="teacherRankTable"></div>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) { window.location.href = 'login.html'; }
+
+        function api(method, url, body) {
+            var opt = { method: method, headers: { 'Authorization': 'Bearer ' + token } };
+            if (body) { opt.headers['Content-Type'] = 'application/json'; opt.body = JSON.stringify(body); }
+            return fetch(url, opt).then(function(r) { return r.json(); });
+        }
+
+        var teacherClass = '';
+
+        function init() {
+            api('GET', '/api/auth/check').then(function(d) {
+                if (!d.success) { logout(); return; }
+                document.getElementById('userInfo').textContent = d.data.name + ' (教师)';
+                // Get teacher's class from their user ID
+                var uid = d.data.user_id;
+                api('GET', '/api/students?search=' + uid + '&size=1').then(function(sd) {
+                    if (sd.success && sd.data.length > 0) {
+                        teacherClass = sd.data[0].class || '';
+                    }
+                    // Default: show all grades (teacher may manage multiple classes)
+                    loadClassGrades();
+                });
+            });
+            loadExamSelects();
+        }
+
+        function logout() { localStorage.clear(); window.location.href = 'login.html'; }
+
+        function changePassword() {
+            var oldPwd = prompt('请输入旧密码：');
+            if (!oldPwd) return;
+            var newPwd = prompt('请输入新密码（至少4位）：');
+            if (!newPwd || newPwd.length < 4) { alert('密码至少4位'); return; }
+            api('POST', '/api/change-password', { old_password: oldPwd, new_password: newPwd }).then(function(d) { alert(d.message); });
+        }
+
+        function switchTab(name) {
+            document.querySelectorAll('.tab-content').forEach(function(el) { el.classList.remove('active'); });
+            document.querySelectorAll('.tab').forEach(function(el) { el.classList.remove('active'); });
+            document.getElementById('tab-' + name).classList.add('active');
+            event.target.classList.add('active');
+            if (name === 'grades') loadClassGrades();
+            if (name === 'rank') loadTeacherRank();
+        }
+
+        function loadExamSelects() {
+            api('GET', '/api/exams').then(function(d) {
+                if (!d.success) return;
+                var opts = '<option value="">选择考试</option>';
+                d.data.forEach(function(e) { opts += '<option value="' + e.id + '">' + e.name + '</option>'; });
+                document.getElementById('gradeExam').innerHTML = opts;
+                document.getElementById('rankExam').innerHTML = opts;
+            });
+            // Load subjects for rank subject filter
+            api('GET', '/api/subjects').then(function(d) {
+                if (!d.success) return;
+                var opts = '<option value="">总分排名</option>';
+                d.data.forEach(function(s) { opts += '<option value="' + s.name + '">' + s.name + '排名</option>'; });
+                document.getElementById('rankSubject').innerHTML = opts;
+            });
+        }
+
+        function showMessage(msg, ok) { alert(msg); }
+
+        function buildTable(headers, rows, actions) {
+            var html = '<table><thead><tr>';
+            headers.forEach(function(h) { html += '<th>' + h + '</th>'; });
+            if (actions && actions.length > 0) html += '<th>操作</th>';
+            html += '</tr></thead><tbody>';
+            if (rows.length === 0) {
+                html += '<tr><td colspan="' + (headers.length + (actions?1:0)) + '" style="text-align:center;color:#999;">暂无数据</td></tr>';
+            } else {
+                rows.forEach(function(row) {
+                    html += '<tr>';
+                    headers.forEach(function(h) { html += '<td>' + (row[h] !== undefined ? row[h] : '') + '</td>'; });
+                    if (actions && actions.length > 0) {
+                        html += '<td>' + actions.map(function(a) {
+                            return '<button style="margin-right:4px;font-size:12px;padding:4px 8px;" onclick="' + a.onclick.replace(/\{id\}/g, row.id || '') + '">' + a.label + '</button>';
+                        }).join('') + '</td>';
+                    }
+                    html += '</tr>';
+                });
+            }
+            html += '</tbody></table>';
+            return html;
+        }
+
+        // ====== 成绩管理 ======
+        function loadClassGrades() {
+            var examId = document.getElementById('gradeExam').value;
+            var url = '/api/grades';
+            if (examId) url += '?exam_id=' + examId;
+            api('GET', url).then(function(d) {
+                if (!d.success) { document.getElementById('classGradesTable').innerHTML = '<p style="color:#999;text-align:center;padding:40px;">加载失败</p>'; return; }
+                if (d.data.length === 0) { document.getElementById('classGradesTable').innerHTML = '<p style="color:#999;text-align:center;padding:40px;">暂无成绩数据</p>'; return; }
+                var rows = [];
+                var subjects = [];
+                d.data.forEach(function(g) {
+                    var row = { 学号: g.student_id, 姓名: g.student_name, 班级: g.class };
+                    if (g.scores && typeof g.scores === 'object') {
+                        for (var k in g.scores) {
+                            if (subjects.indexOf(k) === -1) subjects.push(k);
+                            row[k] = g.scores[k];
+                        }
+                    }
+                    rows.push(row);
+                });
+                var headers = ['学号','姓名','班级'].concat(subjects);
+                document.getElementById('classGradesTable').innerHTML = buildTable(headers, rows, []);
+            });
+        }
+
+        function showGradeModal() {
+            var examId = document.getElementById('gradeExam').value;
+            if (!examId) { alert('请先选择考试'); return; }
+            var studentId = prompt('请输入学号：');
+            if (!studentId) return;
+            api('GET', '/api/exams').then(function(d) {
+                var exam = d.data.find(function(e) { return e.id === examId; });
+                if (!exam) return;
+                var scores = {};
+                exam.subjects.forEach(function(s) {
+                    var sval = prompt('请输入 ' + s + ' 成绩：');
+                    if (sval) scores[s] = sval;
+                });
+                api('POST', '/api/grades', { student_id: studentId, exam_id: examId, scores: scores }).then(function(d) {
+                    alert(d.message);
+                    if (d.success) loadClassGrades();
+                });
+            });
+        }
+
+        // ====== 排名查看 ======
+        function loadTeacherRank() {
+            var examId = document.getElementById('rankExam').value;
+            if (!examId) { document.getElementById('teacherRankTable').innerHTML = '<p style="color:#999;text-align:center;padding:40px;">请选择考试</p>'; return; }
+            var subject = document.getElementById('rankSubject').value;
+            var type = document.getElementById('rankType').value;
+            var url = '/api/stats/rank?exam_id=' + examId + '&type=' + type;
+            if (subject) url += '&subject=' + encodeURIComponent(subject);
+            api('GET', url).then(function(d) {
+                if (!d.success) { document.getElementById('teacherRankTable').innerHTML = '<p style="color:#999;text-align:center;padding:40px;">数据不足</p>'; return; }
+                var rows = [];
+                if (type === 'class') {
+                    for (var cls in d.data) {
+                        d.data[cls].forEach(function(r) {
+                            rows.push({ 班级: cls, 排名: r.rank, 学号: r.student_id, 姓名: r.student_name, 分数: r.total_score });
+                        });
+                    }
+                } else {
+                    rows = d.data.map(function(r) { return { 排名: r.rank, 学号: r.student_id, 姓名: r.student_name, 班级: r.class, 分数: r.total_score }; });
+                }
+                var headers = type === 'class' ? ['班级','排名','学号','姓名','分数'] : ['排名','学号','姓名','班级','分数'];
+                document.getElementById('teacherRankTable').innerHTML = buildTable(headers, rows, []);
+            });
+        }
+
+        init();
+    </script>
+</body>
+</html>
