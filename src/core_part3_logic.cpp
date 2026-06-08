@@ -9,6 +9,16 @@
  * 5. 把结构体转换成前端能直接使用的 JSON 字符串
  */
 
+#ifndef EDUGRADE_CORE_PART3_LOGIC_CPP_INCLUDED
+#define EDUGRADE_CORE_PART3_LOGIC_CPP_INCLUDED
+
+// 如果编辑器单独分析当前文件，就自动补齐前面的基础部分和存储部分。
+#ifndef EDUGRADE_CORE_PART2_STORAGE_CPP_INCLUDED
+#include "core_part2_storage.cpp"
+#endif
+
+namespace {
+
 /* ---------- 查找辅助函数 ---------- */
 
 int findUserIndex(const std::vector<User>& users, const std::string& id) {
@@ -444,4 +454,8 @@ std::string buildClassListJson() {
     root_fields.push_back(fieldRaw("grades", serializeStringArray(uniqueGrades(students))));
     return makeObject(root_fields);
 }
+
+}  // 匿名命名空间结束
+
+#endif
 

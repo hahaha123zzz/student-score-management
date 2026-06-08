@@ -9,6 +9,16 @@
  * 4. 返回统一格式的 JSON 响应
  */
 
+#ifndef EDUGRADE_CORE_PART4_HANDLERS_CPP_INCLUDED
+#define EDUGRADE_CORE_PART4_HANDLERS_CPP_INCLUDED
+
+// 如果编辑器单独分析当前文件，就自动补齐前面的基础、存储和业务逻辑。
+#ifndef EDUGRADE_CORE_PART3_LOGIC_CPP_INCLUDED
+#include "core_part3_logic.cpp"
+#endif
+
+namespace {
+
 /* ---------- 接口处理函数 ---------- */
 
 void handleLogin(const Request& req, Response& res) {
@@ -934,4 +944,6 @@ void handleLogs(const Request& req, Response& res) {
 }
 
 }  // 匿名命名空间结束
+
+#endif
 

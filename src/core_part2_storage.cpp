@@ -9,6 +9,16 @@
  * 由于课程要求使用文件持久化，这里全部基于 fstream 完成。
  */
 
+#ifndef EDUGRADE_CORE_PART2_STORAGE_CPP_INCLUDED
+#define EDUGRADE_CORE_PART2_STORAGE_CPP_INCLUDED
+
+// 如果编辑器单独分析当前文件，就先补上前一部分的基础定义。
+#ifndef EDUGRADE_CORE_PART1_BASE_CPP_INCLUDED
+#include "core_part1_base.cpp"
+#endif
+
+namespace {
+
 /* ---------- 文本数据解析与读写 ---------- */
 
 std::map<std::string, std::string> parseScoreMap(const std::string& text) {
@@ -284,4 +294,8 @@ void ensureSeedData() {
         "LOG1|system|初始化|创建示例数据|2026-02-20 09:00:00"
     });
 }
+
+}  // 匿名命名空间结束
+
+#endif
 

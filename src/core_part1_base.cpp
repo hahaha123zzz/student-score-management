@@ -8,7 +8,14 @@
  * 4. 表单解析与 JSON 字符串拼接
  *
  * 读代码时建议先看这一部分，再往后看数据读写和业务逻辑。
+ *
+ * 额外说明：
+ * 为了减少编辑器把分段 .cpp 当成“独立源文件”时产生的大量误报，
+ * 每个分段文件都加上了简单的包含保护，让它既能单独解析，也能被 main.cpp 组合。
  */
+
+#ifndef EDUGRADE_CORE_PART1_BASE_CPP_INCLUDED
+#define EDUGRADE_CORE_PART1_BASE_CPP_INCLUDED
 
 #include "../lib/httplib.h"
 
@@ -19,6 +26,7 @@
 #include <ctime>
 #include <fstream>
 #include <iomanip>
+#include <iostream>
 #include <map>
 #include <set>
 #include <sstream>
@@ -369,4 +377,8 @@ void setError(Response& res, int status, const std::string& message) {
     res.status = status;
     setJson(res, makeResponse(false, message, "null"));
 }
+
+}  // 匿名命名空间结束
+
+#endif
 
