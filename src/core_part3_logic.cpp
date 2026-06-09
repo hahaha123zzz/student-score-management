@@ -21,6 +21,7 @@ namespace {
 
 /* ---------- 查找辅助函数 ---------- */
 
+// 按用户 id 查找账号在数组中的位置，找不到返回 -1。
 int findUserIndex(const std::vector<User>& users, const std::string& id) {
     for (std::size_t i = 0; i < users.size(); ++i) {
         if (users[i].id == id) return static_cast<int>(i);
@@ -28,6 +29,7 @@ int findUserIndex(const std::vector<User>& users, const std::string& id) {
     return -1;
 }
 
+// 按学号查找学生在数组中的位置，找不到返回 -1。
 int findStudentIndex(const std::vector<Student>& students, const std::string& id) {
     for (std::size_t i = 0; i < students.size(); ++i) {
         if (students[i].id == id) return static_cast<int>(i);
@@ -35,6 +37,7 @@ int findStudentIndex(const std::vector<Student>& students, const std::string& id
     return -1;
 }
 
+// 按科目 id 查找科目在数组中的位置，找不到返回 -1。
 int findSubjectIndex(const std::vector<Subject>& subjects, const std::string& id) {
     for (std::size_t i = 0; i < subjects.size(); ++i) {
         if (subjects[i].id == id) return static_cast<int>(i);
@@ -42,6 +45,7 @@ int findSubjectIndex(const std::vector<Subject>& subjects, const std::string& id
     return -1;
 }
 
+// 按科目名称查找科目，主要用于考试和成绩里的名称匹配。
 int findSubjectIndexByName(const std::vector<Subject>& subjects, const std::string& name) {
     for (std::size_t i = 0; i < subjects.size(); ++i) {
         if (subjects[i].name == name) return static_cast<int>(i);
@@ -49,6 +53,7 @@ int findSubjectIndexByName(const std::vector<Subject>& subjects, const std::stri
     return -1;
 }
 
+// 按考试 id 查找考试在数组中的位置，找不到返回 -1。
 int findExamIndex(const std::vector<Exam>& exams, const std::string& id) {
     for (std::size_t i = 0; i < exams.size(); ++i) {
         if (exams[i].id == id) return static_cast<int>(i);
@@ -56,6 +61,7 @@ int findExamIndex(const std::vector<Exam>& exams, const std::string& id) {
     return -1;
 }
 
+// 按考试 id 和学号查找一条具体的成绩记录。
 int findGradeIndex(const std::vector<GradeRecord>& grades, const std::string& exam_id, const std::string& student_id) {
     for (std::size_t i = 0; i < grades.size(); ++i) {
         if (grades[i].exam_id == exam_id && grades[i].student_id == student_id) {
@@ -65,6 +71,7 @@ int findGradeIndex(const std::vector<GradeRecord>& grades, const std::string& ex
     return -1;
 }
 
+// 根据已有编号生成下一个递增 id，例如 SUB10、EXAM3、LOG8。
 std::string nextIdNumber(const std::string& prefix, const std::vector<std::string>& ids) {
     int max_value = 0;
     for (std::size_t i = 0; i < ids.size(); ++i) {
@@ -77,24 +84,28 @@ std::string nextIdNumber(const std::string& prefix, const std::vector<std::strin
     return prefix + formatDouble(static_cast<double>(max_value + 1));
 }
 
+// 为新科目生成下一个科目编号。
 std::string nextSubjectId(const std::vector<Subject>& subjects) {
     std::vector<std::string> ids;
     for (std::size_t i = 0; i < subjects.size(); ++i) ids.push_back(subjects[i].id);
     return nextIdNumber("SUB", ids);
 }
 
+// 为新考试生成下一个考试编号。
 std::string nextExamId(const std::vector<Exam>& exams) {
     std::vector<std::string> ids;
     for (std::size_t i = 0; i < exams.size(); ++i) ids.push_back(exams[i].id);
     return nextIdNumber("EXAM", ids);
 }
 
+// 为新日志生成下一个日志编号。
 std::string nextLogId(const std::vector<LogEntry>& logs) {
     std::vector<std::string> ids;
     for (std::size_t i = 0; i < logs.size(); ++i) ids.push_back(logs[i].id);
     return nextIdNumber("LOG", ids);
 }
 
+// 按得分率把成绩划分为优秀、良好、中等、及格、不及格。
 std::string scoreLevel(double score, double full_score) {
     double percent = full_score <= 0 ? 0 : (score / full_score) * 100.0;
     if (percent >= 90) return "优秀";
@@ -104,11 +115,13 @@ std::string scoreLevel(double score, double full_score) {
     return "不及格";
 }
 
+// 判断一个成绩文本是否表示缺考或空成绩。
 bool scoreIsAbsent(const std::string& score_text) {
     std::string text = trim(score_text);
     return text.empty() || text == "ABS" || text == "缺考";
 }
 
+// 根据科目名称查出该科满分，找不到时按 100 分处理。
 int fullScoreForSubject(const std::vector<Subject>& subjects, const std::string& subject_name) {
     int index = findSubjectIndexByName(subjects, subject_name);
     if (index < 0) return 100;
@@ -117,6 +130,7 @@ int fullScoreForSubject(const std::vector<Subject>& subjects, const std::string&
 
 /* ---------- 日志写入辅助函数 ---------- */
 
+// 追加一条系统日志，记录谁做了什么操作。
 void addLog(const std::string& user_id, const std::string& action, const std::string& detail) {
     std::vector<LogEntry> logs = loadLogs();
     LogEntry entry;
@@ -131,6 +145,7 @@ void addLog(const std::string& user_id, const std::string& action, const std::st
 
 /* ---------- 登录态与权限校验 ---------- */
 
+// 从 Authorization 请求头中提取 Bearer token。
 std::string extractToken(const Request& req) {
     std::string header = req.get_header_value("Authorization");
     if (header.find("Bearer ") == 0) {
@@ -139,6 +154,7 @@ std::string extractToken(const Request& req) {
     return "";
 }
 
+// 检查用户是否已登录，成功时把会话信息写入 session。
 bool requireAuth(const Request& req, Response& res, SessionInfo& session) {
     std::string token = extractToken(req);
     std::map<std::string, SessionInfo>::iterator it = g_sessions.find(token);
@@ -150,6 +166,7 @@ bool requireAuth(const Request& req, Response& res, SessionInfo& session) {
     return true;
 }
 
+// 检查当前用户是否为管理员，不满足时直接返回 403。
 bool requireAdmin(const Request& req, Response& res, SessionInfo& session) {
     if (!requireAuth(req, res, session)) return false;
     if (session.role != "admin") {
@@ -159,6 +176,7 @@ bool requireAdmin(const Request& req, Response& res, SessionInfo& session) {
     return true;
 }
 
+// 检查是否是本人或管理员，用于学生查看和修改自己的信息。
 bool requireSelfOrAdmin(const Request& req, Response& res, const std::string& target_id, SessionInfo& session) {
     if (!requireAuth(req, res, session)) return false;
     if (session.role == "admin") return true;
@@ -171,6 +189,7 @@ bool requireSelfOrAdmin(const Request& req, Response& res, const std::string& ta
 
 /* ---------- 成绩计算与排名逻辑 ---------- */
 
+// 计算某位学生在一场考试中的总分，缺考科目按 0 计入总分。
 double calculateTotal(const GradeRecord& grade, const Exam& exam) {
     double total = 0.0;
     for (std::size_t i = 0; i < exam.subjects.size(); ++i) {
@@ -182,11 +201,13 @@ double calculateTotal(const GradeRecord& grade, const Exam& exam) {
     return total;
 }
 
+// 计算某位学生在一场考试中的平均分。
 double calculateAverage(const GradeRecord& grade, const Exam& exam) {
     if (exam.subjects.empty()) return 0.0;
     return calculateTotal(grade, exam) / static_cast<double>(exam.subjects.size());
 }
 
+// 构建某场考试的排名结果，可按总分或单科成绩排序。
 std::vector<RankItem> buildRankItems(const std::string& exam_id,
                                      const std::string& sort_mode,
                                      const std::string& subject_name,
@@ -236,6 +257,7 @@ std::vector<RankItem> buildRankItems(const std::string& exam_id,
     return items;
 }
 
+// 提取全部不重复的班级名称，用于筛选和概览展示。
 std::vector<std::string> uniqueClasses(const std::vector<Student>& students) {
     std::set<std::string> class_set;
     std::vector<std::string> classes;
@@ -248,6 +270,7 @@ std::vector<std::string> uniqueClasses(const std::vector<Student>& students) {
     return classes;
 }
 
+// 从学生班级信息中提取全部不重复的年级名称。
 std::vector<std::string> uniqueGrades(const std::vector<Student>& students) {
     std::set<std::string> grade_set;
     std::vector<std::string> grades;
@@ -263,6 +286,7 @@ std::vector<std::string> uniqueGrades(const std::vector<Student>& students) {
 
 /* ---------- 数据转 JSON 字符串 ---------- */
 
+// 把字符串数组转换成 JSON 数组，方便前端直接使用。
 std::string serializeStringArray(const std::vector<std::string>& values) {
     std::vector<std::string> items;
     for (std::size_t i = 0; i < values.size(); ++i) {
@@ -271,6 +295,7 @@ std::string serializeStringArray(const std::vector<std::string>& values) {
     return makeArray(items);
 }
 
+// 把一个 Student 对象转换成 JSON 对象文本。
 std::string serializeStudent(const Student& student) {
     std::vector<std::string> fields;
     fields.push_back(fieldString("id", student.id));
@@ -284,6 +309,7 @@ std::string serializeStudent(const Student& student) {
     return makeObject(fields);
 }
 
+// 把一个 Subject 对象转换成 JSON 对象文本。
 std::string serializeSubject(const Subject& subject) {
     std::vector<std::string> fields;
     fields.push_back(fieldString("id", subject.id));
@@ -292,6 +318,7 @@ std::string serializeSubject(const Subject& subject) {
     return makeObject(fields);
 }
 
+// 把一个 Exam 对象转换成 JSON 对象文本。
 std::string serializeExam(const Exam& exam) {
     std::vector<std::string> fields;
     fields.push_back(fieldString("id", exam.id));
@@ -301,6 +328,7 @@ std::string serializeExam(const Exam& exam) {
     return makeObject(fields);
 }
 
+// 按考试科目顺序把成绩映射表转换成 JSON 对象。
 std::string serializeScoreMap(const std::map<std::string, std::string>& scores, const std::vector<std::string>& order) {
     std::vector<std::string> fields;
     for (std::size_t i = 0; i < order.size(); ++i) {
@@ -311,6 +339,7 @@ std::string serializeScoreMap(const std::map<std::string, std::string>& scores, 
     return makeObject(fields);
 }
 
+// 把一条成绩记录整理成适合前端表格展示的分科成绩数组。
 std::string serializeScoreList(const GradeRecord& grade, const Exam& exam, const std::vector<Subject>& subjects) {
     std::vector<std::string> items;
     for (std::size_t i = 0; i < exam.subjects.size(); ++i) {
@@ -333,6 +362,7 @@ std::string serializeScoreList(const GradeRecord& grade, const Exam& exam, const
     return makeArray(items);
 }
 
+// 把完整成绩记录、学生信息和排名信息组合成前端接口数据。
 std::string serializeGradeRecord(const GradeRecord& grade,
                                  const Student& student,
                                  const Exam& exam,
@@ -357,6 +387,7 @@ std::string serializeGradeRecord(const GradeRecord& grade,
     return makeObject(fields);
 }
 
+// 把一条排名结果转换成前端能直接展示的 JSON 结构。
 std::string serializeRankItem(const RankItem& item, const Exam& exam) {
     std::vector<std::string> fields;
     fields.push_back(fieldString("student_id", item.student.id));
@@ -371,6 +402,7 @@ std::string serializeRankItem(const RankItem& item, const Exam& exam) {
     return makeObject(fields);
 }
 
+// 把日志记录转换成 JSON，供管理员页面查看操作历史。
 std::string serializeLog(const LogEntry& log) {
     std::vector<std::string> fields;
     fields.push_back(fieldString("id", log.id));
@@ -383,6 +415,7 @@ std::string serializeLog(const LogEntry& log) {
 
 /* ---------- 概览数据与统计结果拼装 ---------- */
 
+// 生成首页概览数据，包括数量统计、最新考试和最近日志。
 std::string buildDashboardJson() {
     std::vector<Student> students = loadStudents();
     std::vector<Subject> subjects = loadSubjects();
@@ -430,6 +463,7 @@ std::string buildDashboardJson() {
     return makeObject(fields);
 }
 
+// 生成班级列表和年级列表，供筛选器和统计面板使用。
 std::string buildClassListJson() {
     std::vector<Student> students = loadStudents();
     std::vector<std::string> classes = uniqueClasses(students);

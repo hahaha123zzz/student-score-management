@@ -21,6 +21,7 @@ namespace {
 
 /* ---------- 接口处理函数 ---------- */
 
+// 处理登录请求，验证账号密码并创建登录会话。
 void handleLogin(const Request& req, Response& res) {
     std::map<std::string, std::string> form = parseFormBody(req.body);
     std::string username = trim(formValue(form, "username"));
@@ -61,6 +62,7 @@ void handleLogin(const Request& req, Response& res) {
     setJson(res, makeResponse(true, "登录成功", makeObject(data_fields)));
 }
 
+// 检查当前 token 是否有效，并返回当前登录用户信息。
 void handleAuthCheck(const Request& req, Response& res) {
     SessionInfo session;
     if (!requireAuth(req, res, session)) return;
@@ -71,6 +73,7 @@ void handleAuthCheck(const Request& req, Response& res) {
     setJson(res, makeResponse(true, "认证有效", makeObject(fields)));
 }
 
+// 修改当前登录用户的密码。
 void handleChangePassword(const Request& req, Response& res) {
     SessionInfo session;
     if (!requireAuth(req, res, session)) return;
@@ -102,12 +105,14 @@ void handleChangePassword(const Request& req, Response& res) {
     setJson(res, makeResponse(true, "密码修改成功", "null"));
 }
 
+// 返回班级列表与年级列表，供概览页面和筛选器使用。
 void handleListClasses(const Request& req, Response& res) {
     SessionInfo session;
     if (!requireAuth(req, res, session)) return;
     setJson(res, makeResponse(true, "ok", buildClassListJson()));
 }
 
+// 返回学生列表，并支持按关键字、班级、年级筛选。
 void handleListStudents(const Request& req, Response& res) {
     SessionInfo session;
     if (!requireAdmin(req, res, session)) return;
@@ -143,6 +148,7 @@ void handleListStudents(const Request& req, Response& res) {
     setJson(res, makeResponse(true, "ok", makeObject(fields)));
 }
 
+// 获取单个学生详情，管理员可查全部，学生只能查自己。
 void handleGetStudent(const Request& req, Response& res, const std::string& student_id) {
     SessionInfo session;
     if (!requireSelfOrAdmin(req, res, student_id, session)) return;
@@ -157,6 +163,7 @@ void handleGetStudent(const Request& req, Response& res, const std::string& stud
     setJson(res, makeResponse(true, "ok", serializeStudent(students[static_cast<std::size_t>(student_index)])));
 }
 
+// 新增学生，并同步创建对应的学生登录账号。
 void handleAddStudent(const Request& req, Response& res) {
     SessionInfo session;
     if (!requireAdmin(req, res, session)) return;
@@ -199,6 +206,7 @@ void handleAddStudent(const Request& req, Response& res) {
     setJson(res, makeResponse(true, "学生添加成功", serializeStudent(student)));
 }
 
+// 更新学生资料，管理员可改班级，学生只能改自己的基础信息。
 void handleUpdateStudent(const Request& req, Response& res, const std::string& student_id) {
     SessionInfo session;
     if (!requireSelfOrAdmin(req, res, student_id, session)) return;
@@ -233,6 +241,7 @@ void handleUpdateStudent(const Request& req, Response& res, const std::string& s
     setJson(res, makeResponse(true, "学生信息更新成功", serializeStudent(student)));
 }
 
+// 删除学生，并一并清理该学生的账号和成绩记录。
 void handleDeleteStudent(const Request& req, Response& res, const std::string& student_id) {
     SessionInfo session;
     if (!requireAdmin(req, res, session)) return;
@@ -265,6 +274,7 @@ void handleDeleteStudent(const Request& req, Response& res, const std::string& s
     setJson(res, makeResponse(true, "学生已删除", "null"));
 }
 
+// 返回全部科目列表。
 void handleListSubjects(const Request& req, Response& res) {
     SessionInfo session;
     if (!requireAuth(req, res, session)) return;
@@ -276,6 +286,7 @@ void handleListSubjects(const Request& req, Response& res) {
     setJson(res, makeResponse(true, "ok", makeObject(std::vector<std::string>{fieldRaw("items", makeArray(items))})));
 }
 
+// 新增一个科目并设置该科目的满分。
 void handleAddSubject(const Request& req, Response& res) {
     SessionInfo session;
     if (!requireAdmin(req, res, session)) return;
@@ -305,6 +316,7 @@ void handleAddSubject(const Request& req, Response& res) {
     setJson(res, makeResponse(true, "科目添加成功", serializeSubject(subject)));
 }
 
+// 更新科目名称或满分，并同步修改考试和成绩里的旧科目名。
 void handleUpdateSubject(const Request& req, Response& res, const std::string& subject_id) {
     SessionInfo session;
     if (!requireAdmin(req, res, session)) return;
@@ -360,6 +372,7 @@ void handleUpdateSubject(const Request& req, Response& res, const std::string& s
     setJson(res, makeResponse(true, "科目更新成功", serializeSubject(subject)));
 }
 
+// 删除一个未被任何考试使用的科目。
 void handleDeleteSubject(const Request& req, Response& res, const std::string& subject_id) {
     SessionInfo session;
     if (!requireAdmin(req, res, session)) return;
@@ -386,6 +399,7 @@ void handleDeleteSubject(const Request& req, Response& res, const std::string& s
     setJson(res, makeResponse(true, "科目已删除", "null"));
 }
 
+// 解析考试科目字符串，把“语文,数学”拆成科目数组。
 std::vector<std::string> parseSubjectText(const std::string& text) {
     std::vector<std::string> raw_parts = split(text, ',');
     std::vector<std::string> subjects;
@@ -396,6 +410,7 @@ std::vector<std::string> parseSubjectText(const std::string& text) {
     return subjects;
 }
 
+// 检查考试里选择的科目是否都已经存在于科目表中。
 bool subjectsExist(const std::vector<Subject>& subjects, const std::vector<std::string>& names) {
     for (std::size_t i = 0; i < names.size(); ++i) {
         if (findSubjectIndexByName(subjects, names[i]) < 0) {
@@ -405,6 +420,7 @@ bool subjectsExist(const std::vector<Subject>& subjects, const std::vector<std::
     return true;
 }
 
+// 返回全部考试列表。
 void handleListExams(const Request& req, Response& res) {
     SessionInfo session;
     if (!requireAuth(req, res, session)) return;
@@ -417,6 +433,7 @@ void handleListExams(const Request& req, Response& res) {
     setJson(res, makeResponse(true, "ok", makeObject(std::vector<std::string>{fieldRaw("items", makeArray(items))})));
 }
 
+// 新增一场考试，并保存考试名称、日期和考试科目。
 void handleAddExam(const Request& req, Response& res) {
     SessionInfo session;
     if (!requireAdmin(req, res, session)) return;
@@ -450,6 +467,7 @@ void handleAddExam(const Request& req, Response& res) {
     setJson(res, makeResponse(true, "考试添加成功", serializeExam(exam)));
 }
 
+// 更新一场考试的名称、日期或考试科目。
 void handleUpdateExam(const Request& req, Response& res, const std::string& exam_id) {
     SessionInfo session;
     if (!requireAdmin(req, res, session)) return;
@@ -484,6 +502,7 @@ void handleUpdateExam(const Request& req, Response& res, const std::string& exam
     setJson(res, makeResponse(true, "考试更新成功", serializeExam(exam)));
 }
 
+// 删除一场考试，并同时删除这场考试下的全部成绩。
 void handleDeleteExam(const Request& req, Response& res, const std::string& exam_id) {
     SessionInfo session;
     if (!requireAdmin(req, res, session)) return;
@@ -509,6 +528,7 @@ void handleDeleteExam(const Request& req, Response& res, const std::string& exam
     setJson(res, makeResponse(true, "考试已删除", "null"));
 }
 
+// 解析成绩文本，把空分数统一转成缺考标记。
 std::map<std::string, std::string> parseGradeScores(const std::string& scores_text) {
     std::map<std::string, std::string> scores = parseScoreMap(scores_text);
     std::map<std::string, std::string>::iterator it = scores.begin();
@@ -518,6 +538,7 @@ std::map<std::string, std::string> parseGradeScores(const std::string& scores_te
     return scores;
 }
 
+// 按考试科目顺序整理成绩，确保每个科目都有对应值。
 std::map<std::string, std::string> normalizeGradeScoresForExam(const Exam& exam,
                                                                const std::map<std::string, std::string>& raw_scores) {
     std::map<std::string, std::string> normalized;
@@ -533,6 +554,7 @@ std::map<std::string, std::string> normalizeGradeScoresForExam(const Exam& exam,
     return normalized;
 }
 
+// 返回成绩列表，并支持按考试、学生、班级筛选。
 void handleListGrades(const Request& req, Response& res) {
     SessionInfo session;
     if (!requireAdmin(req, res, session)) return;
@@ -582,6 +604,7 @@ void handleListGrades(const Request& req, Response& res) {
     setJson(res, makeResponse(true, "ok", makeObject(fields)));
 }
 
+// 新增或覆盖一条成绩记录。
 void handleUpsertGrade(const Request& req, Response& res) {
     SessionInfo session;
     if (!requireAdmin(req, res, session)) return;
@@ -629,6 +652,7 @@ void handleUpsertGrade(const Request& req, Response& res) {
     setJson(res, makeResponse(true, "成绩保存成功", "null"));
 }
 
+// 删除指定考试和指定学生对应的一条成绩记录。
 void handleDeleteGrade(const Request& req, Response& res, const std::string& exam_id, const std::string& student_id) {
     SessionInfo session;
     if (!requireAdmin(req, res, session)) return;
@@ -646,6 +670,7 @@ void handleDeleteGrade(const Request& req, Response& res, const std::string& exa
     setJson(res, makeResponse(true, "成绩已删除", "null"));
 }
 
+// 返回某个学生的全部成绩与对应排名。
 void handleStudentGrades(const Request& req, Response& res, const std::string& student_id) {
     SessionInfo session;
     if (!requireSelfOrAdmin(req, res, student_id, session)) return;
@@ -691,6 +716,7 @@ void handleStudentGrades(const Request& req, Response& res, const std::string& s
     setJson(res, makeResponse(true, "ok", makeObject(fields)));
 }
 
+// 返回某场考试的年级排名，可按总分或单科排序。
 void handleGradeRank(const Request& req, Response& res) {
     SessionInfo session;
     if (!requireAuth(req, res, session)) return;
@@ -739,6 +765,7 @@ void handleGradeRank(const Request& req, Response& res) {
     setJson(res, makeResponse(true, "ok", makeObject(fields)));
 }
 
+// 返回某场考试某个班级的班级排名，可按总分或单科排序。
 void handleClassRank(const Request& req, Response& res) {
     SessionInfo session;
     if (!requireAuth(req, res, session)) return;
@@ -806,6 +833,7 @@ void handleClassRank(const Request& req, Response& res) {
     setJson(res, makeResponse(true, "ok", makeObject(fields)));
 }
 
+// 返回概览统计或某场考试的详细统计信息。
 void handleExamStats(const Request& req, Response& res) {
     SessionInfo session;
     if (!requireAuth(req, res, session)) return;
@@ -883,6 +911,7 @@ void handleExamStats(const Request& req, Response& res) {
     setJson(res, makeResponse(true, "ok", makeObject(fields)));
 }
 
+// 导出某场考试的成绩为 CSV 文本，供前端下载。
 void handleExportCsv(const Request& req, Response& res) {
     SessionInfo session;
     if (!requireAdmin(req, res, session)) return;
@@ -931,6 +960,7 @@ void handleExportCsv(const Request& req, Response& res) {
     setJson(res, makeResponse(true, "导出成功", makeObject(fields)));
 }
 
+// 返回系统操作日志，供管理员查看最近操作。
 void handleLogs(const Request& req, Response& res) {
     SessionInfo session;
     if (!requireAdmin(req, res, session)) return;

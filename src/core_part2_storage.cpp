@@ -21,6 +21,7 @@ namespace {
 
 /* ---------- 文本数据解析与读写 ---------- */
 
+// 把“科目:分数,科目:分数”格式的文本解析成成绩映射表。
 std::map<std::string, std::string> parseScoreMap(const std::string& text) {
     std::map<std::string, std::string> scores;
     if (trim(text).empty()) return scores;
@@ -38,6 +39,7 @@ std::map<std::string, std::string> parseScoreMap(const std::string& text) {
     return scores;
 }
 
+// 把成绩映射表重新拼回文本，便于写入 grades.txt。
 std::string scoreMapToText(const std::map<std::string, std::string>& scores) {
     std::vector<std::string> items;
     std::map<std::string, std::string>::const_iterator it = scores.begin();
@@ -47,6 +49,7 @@ std::string scoreMapToText(const std::map<std::string, std::string>& scores) {
     return join(items, ",");
 }
 
+// 从 users.txt 读取全部用户账号信息。
 std::vector<User> loadUsers() {
     std::vector<User> users;
     std::vector<std::string> lines = readLines(USERS_FILE);
@@ -64,6 +67,7 @@ std::vector<User> loadUsers() {
     return users;
 }
 
+// 把用户账号列表整体写回 users.txt。
 void saveUsers(const std::vector<User>& users) {
     std::vector<std::string> lines;
     for (std::size_t i = 0; i < users.size(); ++i) {
@@ -73,6 +77,7 @@ void saveUsers(const std::vector<User>& users) {
     writeLines(USERS_FILE, lines);
 }
 
+// 从 students.txt 读取全部学生资料。
 std::vector<Student> loadStudents() {
     std::vector<Student> students;
     std::vector<std::string> lines = readLines(STUDENTS_FILE);
@@ -98,6 +103,7 @@ std::vector<Student> loadStudents() {
     return students;
 }
 
+// 把学生资料整体写回 students.txt。
 void saveStudents(const std::vector<Student>& students) {
     std::vector<std::string> lines;
     for (std::size_t i = 0; i < students.size(); ++i) {
@@ -108,6 +114,7 @@ void saveStudents(const std::vector<Student>& students) {
     writeLines(STUDENTS_FILE, lines);
 }
 
+// 从 subjects.txt 读取全部科目及满分设置。
 std::vector<Subject> loadSubjects() {
     std::vector<Subject> subjects;
     std::vector<std::string> lines = readLines(SUBJECTS_FILE);
@@ -124,6 +131,7 @@ std::vector<Subject> loadSubjects() {
     return subjects;
 }
 
+// 把科目列表整体写回 subjects.txt。
 void saveSubjects(const std::vector<Subject>& subjects) {
     std::vector<std::string> lines;
     for (std::size_t i = 0; i < subjects.size(); ++i) {
@@ -133,6 +141,7 @@ void saveSubjects(const std::vector<Subject>& subjects) {
     writeLines(SUBJECTS_FILE, lines);
 }
 
+// 从 exams.txt 读取全部考试记录和考试科目。
 std::vector<Exam> loadExams() {
     std::vector<Exam> exams;
     std::vector<std::string> lines = readLines(EXAMS_FILE);
@@ -152,6 +161,7 @@ std::vector<Exam> loadExams() {
     return exams;
 }
 
+// 把考试列表整体写回 exams.txt。
 void saveExams(const std::vector<Exam>& exams) {
     std::vector<std::string> lines;
     for (std::size_t i = 0; i < exams.size(); ++i) {
@@ -161,6 +171,7 @@ void saveExams(const std::vector<Exam>& exams) {
     writeLines(EXAMS_FILE, lines);
 }
 
+// 从 grades.txt 读取每位学生在各场考试中的成绩。
 std::vector<GradeRecord> loadGrades() {
     std::vector<GradeRecord> grades;
     std::vector<std::string> lines = readLines(GRADES_FILE);
@@ -177,6 +188,7 @@ std::vector<GradeRecord> loadGrades() {
     return grades;
 }
 
+// 把成绩记录整体写回 grades.txt。
 void saveGrades(const std::vector<GradeRecord>& grades) {
     std::vector<std::string> lines;
     for (std::size_t i = 0; i < grades.size(); ++i) {
@@ -186,6 +198,7 @@ void saveGrades(const std::vector<GradeRecord>& grades) {
     writeLines(GRADES_FILE, lines);
 }
 
+// 从 logs.txt 读取系统操作日志。
 std::vector<LogEntry> loadLogs() {
     std::vector<LogEntry> logs;
     std::vector<std::string> lines = readLines(LOGS_FILE);
@@ -203,6 +216,7 @@ std::vector<LogEntry> loadLogs() {
     return logs;
 }
 
+// 把操作日志整体写回 logs.txt。
 void saveLogs(const std::vector<LogEntry>& logs) {
     std::vector<std::string> lines;
     for (std::size_t i = 0; i < logs.size(); ++i) {
@@ -214,11 +228,13 @@ void saveLogs(const std::vector<LogEntry>& logs) {
 
 /* ---------- 初始化示例数据 ---------- */
 
+// 只有文件不存在或为空时才写入初始示例数据，避免覆盖已有真实数据。
 void writeSeedIfMissing(const std::string& path, const std::vector<std::string>& lines) {
     if (pathExists(path) && !readLines(path).empty()) return;
     writeLines(path, lines);
 }
 
+// 首次运行时创建数据目录，并补齐作业演示所需的基础示例数据。
 void ensureSeedData() {
     ensureDataDirectory();
 

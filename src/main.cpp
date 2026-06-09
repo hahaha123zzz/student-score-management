@@ -15,9 +15,11 @@
 #include "core_part4_handlers.cpp"
 
 int main() {
+    // 初始化随机种子，并在首次运行时补齐示例数据文件。
     std::srand(static_cast<unsigned int>(std::time(NULL)));
     ensureSeedData();
 
+    // 创建 HTTP 服务器对象，后续所有接口都注册到它上面。
     Server server;
 
     /*
@@ -88,11 +90,15 @@ int main() {
     server.Get("/api/export", handleExportCsv);
 
     /* ---------- 静态页面 ---------- */
+    // 访问根路径时，默认跳转到首页。
     server.Get("/", [](const Request&, Response& res) {
         res.set_redirect("/index.html");
     });
+
+    // 把 web 目录挂载成静态资源目录，供浏览器直接访问页面和脚本。
     server.set_mount_point("/", "./web");
 
+    // 输出启动提示，并监听 8080 端口等待浏览器访问。
     std::cout << "EduGrade 服务已启动：http://localhost:8080" << std::endl;
     server.listen("0.0.0.0", 8080);
     return 0;
